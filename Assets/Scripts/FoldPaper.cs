@@ -7,10 +7,26 @@ public class Papers
 {
     public List<Paper> paperList;
 
-    public Papers()
+    public Papers(int width, int height)
     {
         Debug.Log("Papers()");
         paperList = new List<Paper>();
+
+        /* init first paper */
+        var vertices = new Vector3[]
+        {
+            new Vector3(0,0,0),
+            new Vector3(0,height,0),
+            new Vector3(width,height,0),
+            new Vector3(width,0,0),
+        };
+
+
+        makePaper(vertices);
+        paperList[0].paper.transform.position = new Vector3(0, 0, 0);
+        /* End init first paper */
+
+        
     }
     public void makePaper(Vector3[] vertices)
     {
@@ -23,7 +39,7 @@ public class Papers
         static int paperCount = 0;
         public Paper(Vector3[] vertices)
         {
-            
+            /* Make One Paper */
             Debug.Log("Paper()");
             paper = new GameObject();
             paper.name = "Paper Split " + paperCount++;
@@ -32,12 +48,11 @@ public class Papers
             var mc = paper.AddComponent<MeshCollider>();
             var mesh = new Mesh();
             mf.mesh = mesh;
-            
             mr.material.color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+
+            /* Make mesh.triangle use 2D Triangulator and Orthodontist */
             mesh.vertices = vertices;
-
             var vertices2D = new Vector2[vertices.Length];
-
             var allEqual = new bool[] { true, true, true };
             var first_element = new double[] { vertices[0].x, vertices[0].y, vertices[0].z };
             for (int i = 0; i < 3; i++)
@@ -67,6 +82,7 @@ public class Papers
             Triangulator tr = new Triangulator(vertices2D);
             var tris = tr.Triangulate();
             mesh.triangles = tris;
+            /* End Make mesh.triangle use 2D Triangulator and Orthodontist */
 
             var normals = new Vector3[vertices.Length];
             for (int i = 0; i < vertices.Length; i++)
@@ -83,48 +99,81 @@ public class Papers
             mesh.uv = uv;
             mc.sharedMesh = mesh;
         }
+        /* End Make One Paper */
+        }
+
+
     }
-
-
-}
 public class FoldPaper : MonoBehaviour
 {
     // Start is called before the first frame update
     GameObject mainPaper;
 
+    void makeSphere(RaycastHit hit, Color color, int sphereCount)
+    {
+        /* Make one sphere with hit and Color */
+        Transform objectHit = hit.transform;
+        Debug.Log(hit.point);
+        GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        sphere.name = "Sphere " + sphereCount;
+        sphere.transform.position = hit.point;
+        sphere.transform.localScale -= new Vector3(0.75f, 0.75f, 0.75f);
+        sphere.GetComponent<MeshRenderer>().material.color = color;
+        /* End Make one sphere with hit and Color */
+    }
     void Start()
     {
-        Debug.Log("Start()");
-
         int width = 9, height = 5;
-        var vertices = new Vector3[]
-        {
-            new Vector3(0,0,0),
-            new Vector3(0,height,0),
-            new Vector3(width,height,0),
-            new Vector3(width,0,0),
-        };
-        
-        Papers p = new Papers();
-        p.makePaper(vertices);
-        p.paperList[0].paper.transform.position = new Vector3(0, 0, 0);
+        Papers p = new Papers(width, height);
 
+        /* Set position of camera and light */
         transform.position = new Vector3((float)width / 2, (float)height / 2, -10);
         var mainLight = GameObject.Find("Main Light");
         mainLight.transform.position = new Vector3((float)width/2, (float)height /2, -10);
+        /* End Set position of camera and light */
     }
 
     // Update is called once per frame
-    public GameObject particle;
+    static int sphereCount = 0;
+    static float lastClick = -0.5f;
+    Vector3 lastClickPos = new Vector3(-1, -1, -1);
     void Update()
     {
-        RaycastHit hit;
-        Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out hit))
+        /* Make Sphere on Click */
+        if (Input.GetMouseButtonDown(0) )
         {
-            Transform objectHit = hit.transform;
-            Debug.Log(objectHit);
-            // Do something with the object that was hit by the raycast.
+            RaycastHit hit;
+            Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
+            
+            if (Physics.Raycast(ray, out hit))
+            {
+                /* Double Click */
+                if (hit.collider.name.Contains("Paper") && Time.time < lastClick + 0.5f && sphereCount == 2 && Input.mousePosition == lastClickPos)
+                {
+                    Debug.Log("Double Click!");
+                    makeSphere(hit, Color.blue, sphereCount++);
+                }
+                lastClick = Time.time;
+                lastClickPos = Input.mousePosition;
+                /* End Double Click*/
+
+                /* Click */
+                if (hit.collider.name.Contains("Paper") && sphereCount < 2)
+                {
+                    makeSphere(hit, Color.red, sphereCount++);
+                }
+                /* End Click*/
+            }
         }
+        /* End Make Sphere on Click */
+
+        /* Destroy Sphere on right Click */
+        else if (Input.GetMouseButton(1) && sphereCount != 0)
+        {
+            GameObject sphere = GameObject.Find("Sphere " + --sphereCount);
+            Debug.Log("Delete " + sphere.name);
+            Destroy(sphere);
+        }
+        /* End Destroy Sphere on right Click */
     }
 }
