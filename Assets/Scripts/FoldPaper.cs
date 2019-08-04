@@ -20,17 +20,19 @@ public class Papers
     public class Paper
     {
         public GameObject paper;
-
+        static int paperCount = 0;
         public Paper(Vector3[] vertices)
         {
+            
             Debug.Log("Paper()");
             paper = new GameObject();
-            paper.AddComponent<MeshFilter>();
-            paper.AddComponent<MeshRenderer>();
-            var mf = paper.GetComponent<MeshFilter>();
-            var mr = paper.GetComponent<MeshRenderer>();
+            paper.name = "Paper Split " + paperCount++;
+            var mf = paper.AddComponent<MeshFilter>();
+            var mr = paper.AddComponent<MeshRenderer>();
+            var mc = paper.AddComponent<MeshCollider>();
             var mesh = new Mesh();
             mf.mesh = mesh;
+            
             mr.material.color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
             mesh.vertices = vertices;
 
@@ -79,12 +81,7 @@ public class Papers
                 uv[i] = new Vector2(0, 0);
             }
             mesh.uv = uv;
-
-            //Debug.Log("start");
-            foreach (var e in tris)
-            {
-                Debug.Log(e);
-            }
+            mc.sharedMesh = mesh;
         }
     }
 
@@ -98,24 +95,36 @@ public class FoldPaper : MonoBehaviour
     void Start()
     {
         Debug.Log("Start()");
+
+        int width = 9, height = 5;
         var vertices = new Vector3[]
         {
             new Vector3(0,0,0),
-            new Vector3(0,0,5),
-            new Vector3(0,5,5),
-            new Vector3(0,5,0),
+            new Vector3(0,height,0),
+            new Vector3(width,height,0),
+            new Vector3(width,0,0),
         };
         
         Papers p = new Papers();
         p.makePaper(vertices);
         p.paperList[0].paper.transform.position = new Vector3(0, 0, 0);
-        //mainPaper = GameObject.Find("MainPaper");
-        //mainPaper.transform.Rotate(angle: 30.0f, axis: new Vector3(0));
+
+        transform.position = new Vector3((float)width / 2, (float)height / 2, -10);
+        var mainLight = GameObject.Find("Main Light");
+        mainLight.transform.position = new Vector3((float)width/2, (float)height /2, -10);
     }
 
     // Update is called once per frame
+    public GameObject particle;
     void Update()
     {
-        //Debug.Log(mainPaper.transform.rotation);   
+        RaycastHit hit;
+        Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out hit))
+        {
+            Transform objectHit = hit.transform;
+            Debug.Log(objectHit);
+            // Do something with the object that was hit by the raycast.
+        }
     }
 }
