@@ -31,7 +31,7 @@ public class Papers
             var mr = paper.GetComponent<MeshRenderer>();
             var mesh = new Mesh();
             mf.mesh = mesh;
-            mr.material.color = new Color(255, 255, 255);
+            mr.material.color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
             mesh.vertices = vertices;
 
             var vertices2D = new Vector2[vertices.Length];
