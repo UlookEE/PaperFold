@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class Paper : MonoBehaviour
 {
+    public static int sphereCount = 0;
+    public static Paper usingPaper; 
     public static List<GameObject> paperList = new List<GameObject>();
     public static void makePaper(List<Vector3> vertices)
     {
@@ -117,6 +119,9 @@ public class Paper : MonoBehaviour
         paperList.Remove(gameObject);
         Destroy(gameObject);
         //TODO : 연결관계 가져오기, 현재의 클래스 지우기
+
+        //paper 잡는 임시 코드입니다 ----
+        usingPaper = paperList[paperList.Count - 2].GetComponent<Paper>();
         return true;
     }
 
@@ -189,7 +194,7 @@ public class Paper : MonoBehaviour
     }
     /* End Make One Paper */
 
-    public static bool in_paper(Paper P, Vector3 pos)
+    public static Vector3 in_paper(Paper P, Vector3 pos)
     {
         Debug.Log("before " + pos.ToString());
         var equation = makeEquation.make_plane_equation(new List<Vector3>(){P.vertices[0], P.vertices[1], P.vertices[2]});
@@ -201,13 +206,64 @@ public class Paper : MonoBehaviour
         {
             if(makeEquation.in_triangle(pos, new List<Vector3>() { P.vertices[triangles[i]], P.vertices[triangles[i + 1]], P.vertices[triangles[i + 2]] }))
             {
-                FoldPaper.makeSphere(hit, Color.blue, 1);
-                return true;
+                return pos;
             }
 
         }
-        FoldPaper.makeSphere(hit, Color.red, 1);
-        return false;
+        return new Vector3(-1,-1,-1);
+    }
+
+    public static Vector3 attatch_to_edge(Paper P, Vector3 pos)
+    {
+        List<Vector3> vertices = P.vertices;
+        float minDistance = 100;
+        int minIndex = -1;
+        for (int i=0; i<vertices.Count-1; i++)
+        {
+            Vector3 v1;
+            Vector3 v2;
+            if (i != vertices.Count - 2)
+            {
+                v1 = pos - vertices[i];
+                v2 = vertices[i + 1] - vertices[i];
+            }
+            else
+            {
+                v1 = pos - vertices[i];
+                v2 = vertices[0] - vertices[i];
+            }
+            float angle = Vector3.Angle(v1, v2);
+            if (angle>=0 && angle <= 90)
+            {
+                float distance = v1.magnitude * v2.magnitude * Mathf.Sin(angle*Mathf.Deg2Rad);
+                if(distance < minDistance)
+                {
+                    minDistance = distance;
+                    minIndex = i;
+                }
+            }
+       
+        }
+
+        if (minDistance < 0.1)
+        {
+            Vector3 v1;
+            Vector3 v2;
+            if (minIndex != vertices.Count - 2)
+            {
+                v1 = pos - vertices[minIndex];
+                v2 = vertices[minIndex + 1] - vertices[minIndex];
+            }
+            else
+            {
+                v1 = pos - vertices[minIndex];
+                v2 = vertices[0] - vertices[minIndex];
+            }
+
+            Debug.Log(Vector3.Project(v1, v2) + vertices[minIndex]);
+            return Vector3.Project(v1, v2) + vertices[minIndex];
+        }
+        return new Vector3(-1, -1, -1);
     }
 
 }
@@ -216,16 +272,17 @@ public class FoldPaper : MonoBehaviour
 {
     // Start is called before the first frame update
     GameObject mainPaper;
-    public static GameObject makeSphere(RaycastHit hit, Color color, int sphereCount)
+    public static GameObject makeSphere(Vector3 pos, Color color, GameObject parent)
     {
         /* Make one sphere with hit and Color */
-        Transform objectHit = hit.transform;
         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         Destroy(sphere.GetComponent<SphereCollider>());
-        sphere.name = "Sphere " + sphereCount;
-        sphere.transform.position = hit.point;
+        sphere.name = "Sphere " + Paper.sphereCount;
+        sphere.transform.position = pos;
         sphere.transform.localScale -= new Vector3(0.95f, 0.95f, 0.95f);
         sphere.GetComponent<MeshRenderer>().material.color = color;
+
+        sphere.transform.parent = parent.transform;
         return sphere;
         /* End Make one sphere with hit and Color */
     }
@@ -243,38 +300,59 @@ public class FoldPaper : MonoBehaviour
         };
 
         Paper.makePaper(vertices);
-
-
-        Paper.paperList[0].GetComponent<Paper>().Folding(new Vector2(0, 0.3f), new Vector2(0.3f, 0f));
-        //Papers.paperList[0].Folding(new Vector2(0.5f, 0.3f), new Vector2(0.5f, 0f));
+        
 
     }
 
     // Update is called once per frame
 
 
+    void find_pos()
+    {
+        RaycastHit hit;
+        Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
+
+        var paperLayer = LayerMask.NameToLayer("PAPER");
+        if (Physics.Raycast(ray, out hit, 100.0f, 1 << paperLayer))
+        {
+            if (hit.collider.name.Contains("Paper"))
+            {
+                GameObject hitGO = hit.collider.gameObject;
+                Paper p = hit.collider.gameObject.GetComponent<Paper>();
+                Vector3 planePos = Paper.in_paper(p, hit.point);
+                if (planePos != new Vector3(-1, -1, -1))
+                {
+                    Vector3 edgePos = Paper.attatch_to_edge(p, planePos);
+                    if (edgePos != new Vector3(-1, -1, -1))
+                    {
+                        makeSphere(edgePos, Color.blue, hitGO);
+                        Paper.sphereCount++;
+                        Paper.usingPaper = p;
+                    }
+                    return;
+                }
+                else
+                {
+                    hitGO.GetComponent<MeshCollider>().enabled = false;
+                    find_pos();
+                    hitGO.GetComponent<MeshCollider>().enabled = true;
+                }
+            }
+            else
+            {
+                return;
+            }
+            /* End Click*/
+        }
+    }
     void Update()
     {
+        
         if (Input.GetMouseButtonDown(0))
         {
-            RaycastHit hit;
-            Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
-
-            var paperLayer = LayerMask.NameToLayer("PAPER");
-            if (Physics.Raycast(ray, out hit, 100.0f, 1 << paperLayer))
+            if (Paper.sphereCount < 2)
             {
-                if (hit.collider.name.Contains("Paper"))
-                {
-                    Debug.Log(Paper.in_paper(hit.collider.gameObject.GetComponent<Paper>(), hit.point));
-                    Vector3 colPosition = hit.collider.gameObject.transform.position;
-                    //GameObject sphere = makeSphere(hit, Color.red, 1);
-                    GameObject g = hit.collider.gameObject;
-                    //sphere.transform.parent = g.transform;
-                    //Debug.Log(sphere.transform.localPosition);
-                    //Debug.Log(sphere.transform.position);
-                    //Debug.Log(g.name);
-                }
-                /* End Click*/
+                find_pos();
             }
         }
 
