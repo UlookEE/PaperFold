@@ -236,6 +236,7 @@ public class Paper : MonoBehaviour
             if (angle>=0 && angle <= 90)
             {
                 float distance = v1.magnitude * v2.magnitude * Mathf.Sin(angle*Mathf.Deg2Rad);
+                
                 if(distance < minDistance)
                 {
                     minDistance = distance;
@@ -244,6 +245,7 @@ public class Paper : MonoBehaviour
             }
        
         }
+        Debug.Log("DIST: " + minDistance);
 
         if (minDistance < 0.1)
         {
@@ -260,12 +262,25 @@ public class Paper : MonoBehaviour
                 v2 = vertices[0] - vertices[minIndex];
             }
 
-            Debug.Log(Vector3.Project(v1, v2) + vertices[minIndex]);
+            Debug.Log("PROJECTION: " + (Vector3.Project(v1, v2) + vertices[minIndex]).ToString());
             return Vector3.Project(v1, v2) + vertices[minIndex];
         }
         return new Vector3(-1, -1, -1);
     }
 
+
+    //민석
+    /// <summary>
+    /// Calculates vertice again.
+    /// </summary>
+    public void VerticeCalculate()
+    {
+        for (int i = 0; i < vertices.Count; ++i)
+        {
+            vertices[i] = transform.TransformPoint(vertices[i]);
+            Debug.Log(i + " " + vertices[i].ToString());
+        }
+    }
 }
 
 public class FoldPaper : MonoBehaviour
@@ -319,6 +334,7 @@ public class FoldPaper : MonoBehaviour
             {
                 GameObject hitGO = hit.collider.gameObject;
                 Paper p = hit.collider.gameObject.GetComponent<Paper>();
+                Debug.Log("PAPER GRAVITY CENTER LOC: " + p.vertices[p.vertices.Count - 1]);
                 Vector3 planePos = Paper.in_paper(p, hit.point);
                 if (planePos != new Vector3(-1, -1, -1))
                 {
