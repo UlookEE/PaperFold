@@ -10,7 +10,7 @@ public class Paper : MonoBehaviour
     public static List<GameObject> paperList = new List<GameObject>();
     public static void makePaper(List<Vector3> vertices)
     {
-        Debug.Log("makePaper()");
+        //Debug.Log("makePaper()");
 
         GameObject tmp = new GameObject();
         tmp.AddComponent<Paper>();
@@ -24,6 +24,19 @@ public class Paper : MonoBehaviour
     static int paperCount = 0;
 
     public List<Vector3> vertices; // 마지막 vertices는 무게중심
+    
+    public List<Vector3> GetGlobalVertices()
+    {
+        List<Vector3> list = new List<Vector3>();
+        foreach(var v in vertices)
+        {
+            Vector3 vector = this.transform.TransformPoint(v);
+            list.Add(vector);
+        }
+        return list;
+    }
+
+
     public int zindex = 0;
     public List<Paper> foldline; //선번호마다 연결된 다른 papername 만약 연결안되면 null값 
     //경고!!!!!! foldline 이 바뀌어서 string에서 Paper로 꼭 바꿔야합니다.
@@ -75,7 +88,7 @@ public class Paper : MonoBehaviour
 
         if (startindex == -1 || endindex == -1)
         {
-            Debug.LogError("start, endindex fault");
+            //Debug.LogError("start, endindex fault");
             return false; // 직선 상에서 분명 좌표를 안잡았음..
         }
 
@@ -86,7 +99,6 @@ public class Paper : MonoBehaviour
         newfoldline.Add(foldline[startindex]); //주의 : 바꿧습니다.
         for (int t = startindex + 1; t - 1 != endindex; t++)
         {
-
             if (t == vertices.Count - 1) t = 0;
             newvertices.Add(vertices[t]);
             newfoldline.Add(foldline[t]);
@@ -128,7 +140,7 @@ public class Paper : MonoBehaviour
     public void initPaper(List<Vector3> vertices, List<string> foldstring = null)
     {
         /* Make One Paper */
-        Debug.Log("Paper()");
+        //Debug.Log("Paper()");
 
         gameObject.layer = LayerMask.NameToLayer("PAPER");
         gameObject.name = "Paper Split " + paperCount++;
@@ -174,7 +186,7 @@ public class Paper : MonoBehaviour
             triangle[i + 2] = vertices.Count - 1;
 
         }
-        Debug.Log(triangle);
+        //Debug.Log(triangle);
 
 
         mesh.vertices = vertices.ToArray();
@@ -196,15 +208,16 @@ public class Paper : MonoBehaviour
 
     public static Vector3 in_paper(Paper P, Vector3 pos)
     {
-        Debug.Log("before " + pos.ToString());
-        var equation = makeEquation.make_plane_equation(new List<Vector3>(){P.vertices[0], P.vertices[1], P.vertices[2]});
+        //Debug.Log("before " + pos.ToString());
+        var globalVertices = P.GetGlobalVertices();
+        var equation = makeEquation.make_plane_equation(new List<Vector3>(){globalVertices[0], globalVertices[1], globalVertices[2]});
         pos = new Vector3(pos.x, pos.y, -(equation[0] * pos.x + equation[1] * pos.y + equation[3]) / equation[2]);
-        Debug.Log("after "+ pos.ToString());
+        //Debug.Log("after "+ pos.ToString());
         var triangles = P.GetComponent<MeshFilter>().mesh.triangles;
         RaycastHit hit = new RaycastHit(); hit.point = pos;
         for (int i=0; i<triangles.Length; i += 3)
         {
-            if(makeEquation.in_triangle(pos, new List<Vector3>() { P.vertices[triangles[i]], P.vertices[triangles[i + 1]], P.vertices[triangles[i + 2]] }))
+            if(makeEquation.in_triangle(pos, new List<Vector3>() { globalVertices[triangles[i]], globalVertices[triangles[i + 1]], globalVertices[triangles[i + 2]] }))
             {
                 return pos;
             }
@@ -215,22 +228,22 @@ public class Paper : MonoBehaviour
 
     public static Vector3 attatch_to_edge(Paper P, Vector3 pos)
     {
-        List<Vector3> vertices = P.vertices;
+        var globalVertices = P.GetGlobalVertices();
         float minDistance = 100;
         int minIndex = -1;
-        for (int i=0; i<vertices.Count-1; i++)
+        for (int i=0; i<globalVertices.Count-1; i++)
         {
             Vector3 v1;
             Vector3 v2;
-            if (i != vertices.Count - 2)
+            if (i != globalVertices.Count - 2)
             {
-                v1 = pos - vertices[i];
-                v2 = vertices[i + 1] - vertices[i];
+                v1 = pos - globalVertices[i];
+                v2 = globalVertices[i + 1] - globalVertices[i];
             }
             else
             {
-                v1 = pos - vertices[i];
-                v2 = vertices[0] - vertices[i];
+                v1 = pos - globalVertices[i];
+                v2 = globalVertices[0] - globalVertices[i];
             }
             float angle = Vector3.Angle(v1, v2);
             if (angle>=0 && angle <= 90)
@@ -245,41 +258,27 @@ public class Paper : MonoBehaviour
             }
        
         }
-        Debug.Log("DIST: " + minDistance);
+        //Debug.Log("DIST: " + minDistance);
 
         if (minDistance < 0.1)
         {
             Vector3 v1;
             Vector3 v2;
-            if (minIndex != vertices.Count - 2)
+            if (minIndex != globalVertices.Count - 2)
             {
-                v1 = pos - vertices[minIndex];
-                v2 = vertices[minIndex + 1] - vertices[minIndex];
+                v1 = pos - globalVertices[minIndex];
+                v2 = globalVertices[minIndex + 1] - globalVertices[minIndex];
             }
             else
             {
-                v1 = pos - vertices[minIndex];
-                v2 = vertices[0] - vertices[minIndex];
+                v1 = pos - globalVertices[minIndex];
+                v2 = globalVertices[0] - globalVertices[minIndex];
             }
 
-            Debug.Log("PROJECTION: " + (Vector3.Project(v1, v2) + vertices[minIndex]).ToString());
-            return Vector3.Project(v1, v2) + vertices[minIndex];
+            //Debug.Log("PROJECTION: " + (Vector3.Project(v1, v2) + globalVertices[minIndex]).ToString());
+            return Vector3.Project(v1, v2) + globalVertices[minIndex];
         }
         return new Vector3(-1, -1, -1);
-    }
-
-
-    //민석
-    /// <summary>
-    /// Calculates vertice again.
-    /// </summary>
-    public void VerticeCalculate()
-    {
-        for (int i = 0; i < vertices.Count; ++i)
-        {
-            vertices[i] = transform.TransformPoint(vertices[i]);
-            Debug.Log(i + " " + vertices[i].ToString());
-        }
     }
 }
 
@@ -334,7 +333,7 @@ public class FoldPaper : MonoBehaviour
             {
                 GameObject hitGO = hit.collider.gameObject;
                 Paper p = hit.collider.gameObject.GetComponent<Paper>();
-                Debug.Log("PAPER GRAVITY CENTER LOC: " + p.vertices[p.vertices.Count - 1]);
+                //Debug.Log("PAPER GRAVITY CENTER LOC: " + p.vertices[p.vertices.Count - 1]);
                 Vector3 planePos = Paper.in_paper(p, hit.point);
                 if (planePos != new Vector3(-1, -1, -1))
                 {
