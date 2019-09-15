@@ -31,7 +31,7 @@ public class FoldButton : MonoBehaviour
             else
             {
                 //Debug.Log(pos1 + " " + pos2);
-                Paper.usingPaper.gameObject.transform.RotateAround(pos2, pos2 - pos1, 3);
+                Paper.usingPaper.gameObject.transform.RotateAround(rotPos2, rotPos2 - rotPos1, 3);
             }
         }
     }

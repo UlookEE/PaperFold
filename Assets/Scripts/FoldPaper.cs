@@ -125,6 +125,12 @@ public class Paper : MonoBehaviour
         makePaper(new2vertices);
 
         //서로 연결
+        var tmpPos = gameObject.transform.position;
+        var tmpRot = gameObject.transform.rotation;
+        paperList[paperList.Count - 2].transform.position = tmpPos;
+        paperList[paperList.Count - 2].transform.rotation = tmpRot;
+        paperList[paperList.Count - 1].transform.position = tmpPos;
+        paperList[paperList.Count - 1].transform.rotation = tmpRot;
         paperList[paperList.Count - 2].GetComponent<Paper>().foldline.Add(paperList[paperList.Count - 1].GetComponent<Paper>());
         paperList[paperList.Count - 1].GetComponent<Paper>().foldline.Add(paperList[paperList.Count - 2].GetComponent<Paper>());
 
@@ -223,7 +229,7 @@ public class Paper : MonoBehaviour
             }
 
         }
-        return new Vector3(-1,-1,-1);
+        return new Vector3(-100,-100,-100);
     }
 
     public static Vector3 attatch_to_edge(Paper P, Vector3 pos)
@@ -235,6 +241,8 @@ public class Paper : MonoBehaviour
         {
             Vector3 v1;
             Vector3 v2;
+            /* v1 : line of pos and vertex
+               v2 : one edge */
             if (i != globalVertices.Count - 2)
             {
                 v1 = pos - globalVertices[i];
@@ -245,6 +253,7 @@ public class Paper : MonoBehaviour
                 v1 = pos - globalVertices[i];
                 v2 = globalVertices[0] - globalVertices[i];
             }
+
             float angle = Vector3.Angle(v1, v2);
             if (angle>=0 && angle <= 90)
             {
@@ -276,9 +285,21 @@ public class Paper : MonoBehaviour
             }
 
             //Debug.Log("PROJECTION: " + (Vector3.Project(v1, v2) + globalVertices[minIndex]).ToString());
-            return Vector3.Project(v1, v2) + globalVertices[minIndex];
+            if(sphereCount == 0)
+                return Vector3.Project(v1, v2) + globalVertices[minIndex];
+            else
+            {
+                var spherePos = Paper.usingPaper.transform.Find("Sphere 0").transform.position;
+                var angle = Vector3.Angle(v2, Vector3.Project(v1, v2) + globalVertices[minIndex] - spherePos);
+                if (angle < 0.001 || angle > 179.999)
+                {
+                    return new Vector3(-100, -100, -100);
+                }
+                return Vector3.Project(v1, v2) + globalVertices[minIndex];
+            }
+
         }
-        return new Vector3(-1, -1, -1);
+        return new Vector3(-100, -100, -100);
     }
 }
 
@@ -335,12 +356,14 @@ public class FoldPaper : MonoBehaviour
                 Paper p = hit.collider.gameObject.GetComponent<Paper>();
                 //Debug.Log("PAPER GRAVITY CENTER LOC: " + p.vertices[p.vertices.Count - 1]);
                 Vector3 planePos = Paper.in_paper(p, hit.point);
-                if (planePos != new Vector3(-1, -1, -1))
+                if (planePos != new Vector3(-100, -100, -100))
                 {
                     Vector3 edgePos = Paper.attatch_to_edge(p, planePos);
-                    if (edgePos != new Vector3(-1, -1, -1))
+                    Debug.Log("Edgepos" + edgePos);
+                    if (edgePos != new Vector3(-100, -100, -100) && (Paper.usingPaper == p || Paper.sphereCount == 0))
                     {
                         makeSphere(edgePos, Color.blue, hitGO);
+                 
                         Paper.sphereCount++;
                         Paper.usingPaper = p;
                     }
