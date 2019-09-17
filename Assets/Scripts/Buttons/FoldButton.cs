@@ -11,7 +11,6 @@ public class FoldButton : MonoBehaviour
     {
         if (Paper.sphereCount == 2)
         {
-            
             if (start == false)
             {
                 pos1 = Paper.usingPaper.gameObject.transform.Find("Sphere 0").transform.position;

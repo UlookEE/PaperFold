@@ -8,5 +8,6 @@ public class ReleaseButton : MonoBehaviour
     {
         Paper.sphereCount = 0;
         FoldButton.start = false;
+        FoldPaper.isCut = false;
     }
 }
