@@ -1,0 +1,67 @@
+[1mdiff --cc Assets/Scripts/FoldPaper.cs[m
+[1mindex 754258a,f3c117b..0000000[m
+[1m--- a/Assets/Scripts/FoldPaper.cs[m
+[1m+++ b/Assets/Scripts/FoldPaper.cs[m
+[36m@@@ -653,12 -285,24 +653,23 @@@[m [mpublic class Paper : MonoBehaviou[m
+              }[m
+  [m
+              //Debug.Log("PROJECTION: " + (Vector3.Project(v1, v2) + globalVertices[minIndex]).ToString());[m
+[31m-             return Vector3.Project(v1, v2) + globalVertices[minIndex];[m
+[32m+             if (sphereCount == 0)[m
+[32m+                 return Vector3.Project(v1, v2) + globalVertices[minIndex];[m
+[32m+             else[m
+[32m+             {[m
+[32m+                 var spherePos = Paper.usingPaper.transform.Find("Sphere 0").transform.position;[m
+[32m+                 var angle = Vector3.Angle(v2, Vector3.Project(v1, v2) + globalVertices[minIndex] - spherePos);[m
+[32m+                 if (angle < 0.001 || angle > 179.999)[m
+[32m+                 {[m
+[32m+                     return new Vector3(-100, -100, -100);[m
+[32m+                 }[m
+[32m+                 return Vector3.Project(v1, v2) + globalVertices[minIndex];[m
+[32m+             }[m
+[31m -[m
+          }[m
+[31m -        return new Vector3(-100, -100, -100);[m
+[32m +        return new Vector3(-1, -1, -1);[m
+      }[m
+  [m
+[31m -    //MinSeok[m
+[32m +    //민석[m
+      public static bool isDragging = false;          //Checks whether it's being dragged.[m
+      public static Vector3 cursorInitialPosition;    //Cursor's initial position in screen.[m
+      public static Vector3 cursorDeltaPosition;      //Cursor's delta position in screen.[m
+[36m@@@ -762,12 -448,18 +800,16 @@@[m [mpublic class FoldPaper : MonoBehaviou[m
+                  Paper p = hit.collider.gameObject.GetComponent<Paper>();[m
+                  //Debug.Log("PAPER GRAVITY CENTER LOC: " + p.vertices[p.vertices.Count - 1]);[m
+                  Vector3 planePos = Paper.in_paper(p, hit.point);[m
+[31m -                if (planePos != new Vector3(-100, -100, -100))[m
+[32m +                if (planePos != new Vector3(-1, -1, -1))[m
+                  {[m
+                      Vector3 edgePos = Paper.attatch_to_edge(p, planePos);[m
+[31m -                    Debug.Log("Edgepos" + edgePos);[m
+[31m -                    if (edgePos != new Vector3(-100, -100, -100) && (Paper.usingPaper == p || Paper.sphereCount == 0))[m
+[32m +                    if (edgePos != new Vector3(-1, -1, -1))[m
+                      {[m
+[31m-                         makeSphere(edgePos, Color.blue, hitGO);[m
+[32m+                         makeSphere(edgePos, Color.HSVToRGB(222 / 360f, 0.7f, 1), hitGO);[m
+[32m+                         //MinSeok[m
+[32m+                         //Adds a ui point.[m
+[32m+                         GameObject uiPointObj = Instantiate(gameManager.uiPoint, gameManager.Points.transform);[m
+[32m+                         uiPointObj.GetComponent<RectTransform>().anchoredPosition = Input.mousePosition;[m
+[31m -[m
+                          Paper.sphereCount++;[m
+                          Paper.usingPaper = p;[m
+                      }[m
+[36m@@@ -787,10 -479,8 +829,8 @@@[m
+              /* End Click*/[m
+          }[m
+      }[m
+[31m- [m
+[31m- [m
+[31m--[m
+[31m-     //민석[m
+[32m++    [m
+[32m+     //MinSeok[m
+      /// <summary>[m
+      /// When click, find which foldpaper user is clicking now.[m
+      /// </summary>[m
