@@ -139,7 +139,7 @@ public class Paper : MonoBehaviour
         //TODO : 연결관계 가져오기, 현재의 클래스 지우기
 
         //paper 잡는 임시 코드입니다 ----
-        usingPaper = paperList[paperList.Count - 2].GetComponent<Paper>();
+        //usingPaper = paperList[paperList.Count - 2].GetComponent<Paper>();
         return true;
     }
 
@@ -301,6 +301,59 @@ public class Paper : MonoBehaviour
         }
         return new Vector3(-100, -100, -100);
     }
+
+    //MinSeok
+    public static bool isDragging = false;          //Checks whether it's being dragged.
+    public static Vector3 cursorInitialPosition;    //Cursor's initial position in screen.
+    public static Vector3 cursorDeltaPosition;      //Cursor's delta position in screen.
+
+    /// <summary>
+    /// When a foldpaper clicked.
+    /// </summary>
+    private void OnMouseDown()
+    {
+        StopCoroutine("CheckDrag");
+        StartCoroutine("CheckDrag");
+    }
+
+    /// <summary>
+    /// When a foldpaper released.
+    /// </summary>
+    private void OnMouseUp()
+    {
+        StopCoroutine("CheckDrag");
+        isDragging = false;
+    }
+
+    /// <summary>
+    /// Checks whether foldpaper is being dragged or not.
+    /// </summary>
+    IEnumerator CheckDrag()
+    {
+        for (int i = 0; i < 10; ++i)
+        {
+            yield return new WaitForSeconds(0.01f);
+        }
+
+        if(sphereCount ==2)
+            isDragging = true;
+
+        cursorInitialPosition = Input.mousePosition;
+        Debug.Log("INITIAL");
+        StopCoroutine("CheckDrag");
+    }
+
+    /// <summary>
+    /// Drag function.
+    /// </summary>
+    private void OnMouseDrag()
+    {
+        if (isDragging)
+        {
+            cursorDeltaPosition = cursorInitialPosition - Input.mousePosition;
+            //Debug.Log(Input.mousePosition);
+        }
+    }
 }
 
 public class FoldPaper : MonoBehaviour
@@ -398,16 +451,136 @@ public class FoldPaper : MonoBehaviour
             /* End Click*/
         }
     }
+    //MinSeok
+    /// <summary>
+    /// When click, find which foldpaper user is clicking now.
+    /// </summary>
+    void find_pos_noSphere()
+    {
+        RaycastHit hit;
+        Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
+
+        var paperLayer = LayerMask.NameToLayer("PAPER");
+        if (Physics.Raycast(ray, out hit, 100.0f, 1 << paperLayer))
+        {
+            if (hit.collider.name.Contains("Paper"))
+            {
+                GameObject hitGO = hit.collider.gameObject;
+                Paper p = hit.collider.gameObject.GetComponent<Paper>();
+                //Debug.Log("PAPER GRAVITY CENTER LOC: " + p.vertices[p.vertices.Count - 1]);
+                Vector3 planePos = Paper.in_paper(p, hit.point);
+                if (planePos != new Vector3(-1, -1, -1))
+                {
+
+                    return;
+                }
+                else
+                {
+                    hitGO.GetComponent<MeshCollider>().enabled = false;
+                    find_pos();
+                    hitGO.GetComponent<MeshCollider>().enabled = true;
+                }
+            }
+            else
+            {
+                return;
+            }
+            /* End Click*/
+        }
+    }
+
+    /// <summary>
+    /// Sets usingpaper to a paper hit by raycast.
+    /// </summary>
+    void find_paper()
+    {
+        RaycastHit hit;
+        Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
+
+        var paperLayer = LayerMask.NameToLayer("PAPER");
+        if (Physics.Raycast(ray, out hit, 100.0f, 1 << paperLayer))
+        {
+            if (hit.collider.name.Contains("Paper"))
+            {
+                GameObject hitGO = hit.collider.gameObject;
+                Paper p = hit.collider.gameObject.GetComponent<Paper>();
+                //Debug.Log("PAPER GRAVITY CENTER LOC: " + p.vertices[p.vertices.Count - 1]);
+                Vector3 planePos = Paper.in_paper(p, hit.point);
+                if (planePos != new Vector3(-100, -100, -100))
+                {
+                    Paper.usingPaper = p;
+                    return;
+                }
+                else
+                {
+                    hitGO.GetComponent<MeshCollider>().enabled = false;
+                    find_paper();
+                    hitGO.GetComponent<MeshCollider>().enabled = true;
+                }
+            }
+            else
+            {
+                return;
+            }
+            /* End Click*/
+        }
+    }
+
+    public static bool isCut = false;
+    public static Vector3 pos1;
+    public static Vector3 pos2;
+    public static Vector3 rotPos1;
+    public static Vector3 rotPos2;
+
     void Update()
     {
-        
+        //민석
+        //If click occurs,
         if (Input.GetMouseButtonDown(0))
         {
-            if (Paper.sphereCount < 2)
+            //If there's  1 or less sphere, and is not cutting paper yet, try to get another sphere.
+            if (Paper.sphereCount < 2 && !isCut)
             {
                 find_pos();
             }
+            //If found all,
+            if (Paper.sphereCount >= 2)
+            {
+                //If not cut foldpaper yet, start cutting it.
+                if (!isCut)
+                {
+                    Debug.Log("isCut");
+                    var posList = spherePosLocal(Paper.usingPaper.gameObject);
+                    rotPos1 = posList[0];
+                    rotPos2 = posList[1];
+                    pos1 = posList[2];
+                    pos2 = posList[3];
+                    Paper.usingPaper.Folding(pos1, pos2);
+                    isCut = true;
+                }
+                //If cutting enabled, find paper and start dragging it.
+                else
+                {
+                    Debug.Log("");
+                    find_paper();
+                }
+            }
         }
 
+        //If user is dragging, rotate it.
+        if (Paper.isDragging)
+        {
+            
+            Vector2 campos1 = Camera.allCameras[0].WorldToScreenPoint(pos1);
+            Vector2 campos2 = Camera.allCameras[0].WorldToScreenPoint(pos2);
+            float angle = Mathf.Acos(Vector2.Dot(Paper.cursorDeltaPosition, campos2 - campos1) / (((Vector2)Paper.cursorDeltaPosition).magnitude * (campos2 - campos1).magnitude));
+            float direction = Mathf.Sign(Vector3.Cross(Paper.cursorDeltaPosition, campos2 - campos1).z);
+            float cosine = direction * Mathf.Abs(Mathf.Sin(angle));
+            float value = Paper.cursorDeltaPosition.magnitude * cosine / 66;
+            //Debug.Log(direction);
+            if (double.IsNaN(value))
+                value = 0;
+            Paper.usingPaper.gameObject.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
+        }
     }
 }
