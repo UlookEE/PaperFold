@@ -322,6 +322,21 @@ public class FoldPaper : MonoBehaviour
         /* End Make one sphere with hit and Color */
     }
 
+    /* return real position and local position of sphere */
+    public static List<Vector3> spherePosLocal(GameObject gameObjectOfPaper)
+    {
+        List<Vector3> retList = new List<Vector3>();
+        retList.Add(gameObjectOfPaper.transform.Find("Sphere 0").transform.position);
+        retList.Add(gameObjectOfPaper.transform.Find("Sphere 1").transform.position);
+
+        var tmpRot = gameObjectOfPaper.transform.rotation;
+        gameObjectOfPaper.transform.rotation = Quaternion.Euler(0, 0, 0);
+        retList.Add(gameObjectOfPaper.transform.Find("Sphere 0").localPosition);
+        retList.Add(gameObjectOfPaper.transform.Find("Sphere 1").localPosition);
+        gameObjectOfPaper.transform.rotation = tmpRot;
+
+        return retList;
+    }
     void Start()
     {
         int width = 1, height = 1;

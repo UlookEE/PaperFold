@@ -9,6 +9,8 @@ public class FoldButton : MonoBehaviour
     public static Vector3 pos2;
     public static Vector3 rotPos1;
     public static Vector3 rotPos2;
+
+ 
     public void OnClick()
     {
         if (Paper.sphereCount == 2)
@@ -16,21 +18,16 @@ public class FoldButton : MonoBehaviour
             
             if (start == false)
             {
-                var gameObjectOfPaper = Paper.usingPaper.gameObject; 
-                rotPos1 = gameObjectOfPaper.transform.Find("Sphere 0").transform.position;
-                rotPos2 = gameObjectOfPaper.transform.Find("Sphere 1").transform.position;
-                
-                var tmpRot = gameObjectOfPaper.transform.rotation;
-                gameObjectOfPaper.transform.rotation = Quaternion.Euler(0, 0, 0);
-                pos1 = gameObjectOfPaper.transform.Find("Sphere 0").localPosition;
-                pos2 = gameObjectOfPaper.transform.Find("Sphere 1").localPosition;
-                gameObjectOfPaper.transform.rotation = tmpRot;
+                var posList = FoldPaper.spherePosLocal(Paper.usingPaper.gameObject);
+                rotPos1 = posList[0];
+                rotPos2 = posList[1];
+                pos1 = posList[2];
+                pos2 = posList[3];
                 Paper.usingPaper.Folding(pos1, pos2);
                 start = true;
             }
             else
             {
-                //Debug.Log(pos1 + " " + pos2);
                 Paper.usingPaper.gameObject.transform.RotateAround(rotPos2, rotPos2 - rotPos1, 3);
             }
         }
