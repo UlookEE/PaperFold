@@ -22,7 +22,7 @@ public class FoldButton : MonoBehaviour
             {
                 Debug.Log(pos1 + " " + pos2);
                 Paper.usingPaper.gameObject.transform.RotateAround(pos2, pos2 - pos1, 3);
-                Paper.usingPaper.VerticeCalculate();
+                //Paper.usingPaper.VerticeCalculate();
             }
         }
     }
