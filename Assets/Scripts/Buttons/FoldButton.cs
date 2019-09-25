@@ -15,7 +15,6 @@ public class FoldButton : MonoBehaviour
     {
         if (Paper.sphereCount == 2)
         {
-            
             if (start == false)
             {
                 var posList = FoldPaper.spherePosLocal(Paper.usingPaper.gameObject);

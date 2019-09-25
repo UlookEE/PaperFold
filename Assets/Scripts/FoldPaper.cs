@@ -6,7 +6,7 @@ using UnityEngine;
 public class Paper : MonoBehaviour
 {
     public static int sphereCount = 0;
-    public static Paper usingPaper; 
+    public static Paper usingPaper;
     public static List<GameObject> paperList = new List<GameObject>();
     public static void makePaper(List<Vector3> vertices)
     {
@@ -205,7 +205,7 @@ public class Paper : MonoBehaviour
 
         mc.sharedMesh = mesh;
         mc.convex = true;
-        mc.isTrigger = true;    
+        mc.isTrigger = true;
 
 
 
@@ -221,7 +221,7 @@ public class Paper : MonoBehaviour
         //Debug.Log("after "+ pos.ToString());
         var triangles = P.GetComponent<MeshFilter>().mesh.triangles;
         RaycastHit hit = new RaycastHit(); hit.point = pos;
-        for (int i=0; i<triangles.Length; i += 3)
+        for (int i = 0; i < triangles.Length; i += 3)
         {
             if(makeEquation.in_triangle(pos, new List<Vector3>() { globalVertices[triangles[i]], globalVertices[triangles[i + 1]], globalVertices[triangles[i + 2]] }))
             {
@@ -255,17 +255,17 @@ public class Paper : MonoBehaviour
             }
 
             float angle = Vector3.Angle(v1, v2);
-            if (angle>=0 && angle <= 90)
+            if (angle >= 0 && angle <= 90)
             {
-                float distance = v1.magnitude * v2.magnitude * Mathf.Sin(angle*Mathf.Deg2Rad);
-                
-                if(distance < minDistance)
+                float distance = v1.magnitude * v2.magnitude * Mathf.Sin(angle * Mathf.Deg2Rad);
+
+                if (distance < minDistance)
                 {
                     minDistance = distance;
                     minIndex = i;
                 }
             }
-       
+
         }
         //Debug.Log("DIST: " + minDistance);
 
@@ -321,7 +321,20 @@ public class Paper : MonoBehaviour
     /// </summary>
     private void OnMouseUp()
     {
+        GameManager gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+
         StopCoroutine("CheckDrag");
+        if (FoldPaper.isCut && !isDragging)
+        {
+            sphereCount = 0;
+            FoldButton.start = false;
+            FoldPaper.isCut = false;
+            for (int i = 0; i < gameManager.Points.transform.childCount; ++i)
+            {
+                Destroy(gameManager.Points.transform.GetChild(i).gameObject);
+            }
+        }
+
         isDragging = false;
     }
 
@@ -330,12 +343,9 @@ public class Paper : MonoBehaviour
     /// </summary>
     IEnumerator CheckDrag()
     {
-        for (int i = 0; i < 10; ++i)
-        {
-            yield return new WaitForSeconds(0.01f);
-        }
+        yield return new WaitForSeconds(0.1f);
 
-        if(sphereCount ==2)
+        if (sphereCount == 2)
             isDragging = true;
 
         cursorInitialPosition = Input.mousePosition;
@@ -348,7 +358,7 @@ public class Paper : MonoBehaviour
     /// </summary>
     private void OnMouseDrag()
     {
-        if (isDragging)
+        if(isDragging)
         {
             cursorDeltaPosition = cursorInitialPosition - Input.mousePosition;
             //Debug.Log(Input.mousePosition);
@@ -358,6 +368,19 @@ public class Paper : MonoBehaviour
 
 public class FoldPaper : MonoBehaviour
 {
+    //MinSeok
+    public static bool isCut = false;
+
+    public static Vector3 pos1;
+    public static Vector3 pos2;
+    public static Vector3 rotPos1;
+    public static Vector3 rotPos2;
+
+    public GameManager gameManager;
+
+    //MinSeok
+    public GameObject followPoint;
+
     // Start is called before the first frame update
     GameObject mainPaper;
     public static GameObject makeSphere(Vector3 pos, Color color, GameObject parent)
@@ -403,8 +426,9 @@ public class FoldPaper : MonoBehaviour
         };
 
         Paper.makePaper(vertices);
-        
 
+        //MinSeok
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
 
     // Update is called once per frame
@@ -430,8 +454,11 @@ public class FoldPaper : MonoBehaviour
                     Debug.Log("Edgepos" + edgePos);
                     if (edgePos != new Vector3(-100, -100, -100) && (Paper.usingPaper == p || Paper.sphereCount == 0))
                     {
-                        makeSphere(edgePos, Color.blue, hitGO);
-                 
+                        makeSphere(edgePos, Color.HSVToRGB(222 / 360f, 0.7f, 1), hitGO);
+                        //MinSeok
+                        //Adds a ui point.
+                        GameObject uiPointObj = Instantiate(gameManager.uiPoint, gameManager.Points.transform);
+                        uiPointObj.GetComponent<RectTransform>().anchoredPosition = Input.mousePosition;
                         Paper.sphereCount++;
                         Paper.usingPaper = p;
                     }
@@ -565,6 +592,17 @@ public class FoldPaper : MonoBehaviour
                     find_paper();
                 }
             }
+        }
+        
+        
+        if (Paper.sphereCount == 1)
+        {
+            gameManager.uiFollowPoint.SetActive(true);
+            gameManager.uiFollowPoint.GetComponent<RectTransform>().anchoredPosition = Input.mousePosition;
+        }
+        else
+        {
+            gameManager.uiFollowPoint.SetActive(false);
         }
 
         //If user is dragging, rotate it.

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ReleaseButton : MonoBehaviour
 {
-    public void OnClick()
+    public static void OnClick()
     {
         Paper.sphereCount = 0;
         FoldButton.start = false;
