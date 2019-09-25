@@ -2,29 +2,90 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public class Paper : MonoBehaviour
 {
+    static int paperCount = 0;      // for gameobject name
+    public List<Vector3> vertices;  // last vertice is CoG
     public static int sphereCount = 0;
-    public static Paper usingPaper; 
-    public static List<GameObject> paperList = new List<GameObject>();
+    public static Paper usingPaper;
+    public static Paper fixedPaper; 
+    public static List<GameObject> paperList = new List<GameObject>();  // entire paper list
+
+    /* Make One Paper */
+    public void initPaper(List<Vector3> vertices, List<string> foldstring = null)
+    {
+        gameObject.layer = LayerMask.NameToLayer("PAPER");
+        gameObject.name = "Paper Split " + paperCount++;
+
+        var mf = gameObject.AddComponent<MeshFilter>();
+        var mr = gameObject.AddComponent<MeshRenderer>();
+        var mc = gameObject.AddComponent<MeshCollider>();
+
+        var mesh = new Mesh();
+
+        if (foldstring == null)
+            attachedPaperList = new List<Paper>(); //접힌면 다 빈칸채우기
+
+        Vector3 centermess = Vector3.zero;
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            centermess += vertices[i];
+        }
+        centermess /= vertices.Count;   // CoG vertex
+        vertices.Add(centermess);
+        this.vertices = vertices;
+
+        Vector2[] uv = new Vector2[vertices.Count];
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            uv[i].x = vertices[i].x;
+            uv[i].y = vertices[i].y;
+        }
+        int[] triangle = new int[(vertices.Count - 1) * 3]; // vertice.Count -1 : because of CoG
+
+        for (int i = 0; i < (vertices.Count - 1) * 3; i += 3)
+        {
+            triangle[i] = i / 3;
+            triangle[i + 1] = (i / 3 + 1) % (vertices.Count - 1);
+            triangle[i + 2] = vertices.Count - 1;
+
+        }
+
+        mesh.vertices = vertices.ToArray();
+        mesh.triangles = triangle;
+
+        mf.mesh = mesh;
+        mr.material.color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+        mr.material.shader = Shader.Find("Custom/Double-Sided-Shader"); // for view mesh both side
+        mesh.uv = uv;
+
+        mc.sharedMesh = mesh;
+        mc.convex = true;
+        mc.isTrigger = true;
+    }
+    /* make paper with gameobject */
     public static void makePaper(List<Vector3> vertices)
     {
-        //Debug.Log("makePaper()");
-
         GameObject tmp = new GameObject();
         tmp.AddComponent<Paper>();
         tmp.GetComponent<Paper>().initPaper(vertices);
-
         paperList.Add(tmp);
-
     }
 
+    /* set fixedPaper : fixedPaper is not rotate */
+    public static void setFIxedPaper ()
+    {
+        if(usingPaper == paperList[paperList.Count - 1].GetComponent<Paper>())
+        {
+            fixedPaper = paperList[paperList.Count - 2].GetComponent<Paper>();
+        }
+        else
+        {
+            fixedPaper = paperList[paperList.Count - 1].GetComponent<Paper>();
+        }
+    }
 
-    static int paperCount = 0;
-
-    public List<Vector3> vertices; // 마지막 vertices는 무게중심
-    
+    /* return list of vertex converted position local to global */
     public List<Vector3> GetGlobalVertices()
     {
         List<Vector3> list = new List<Vector3>();
@@ -36,26 +97,41 @@ public class Paper : MonoBehaviour
         return list;
     }
 
-
     public int zindex = 0;
-    public List<Paper> foldline; //선번호마다 연결된 다른 papername 만약 연결안되면 null값 
-    //경고!!!!!! foldline 이 바뀌어서 string에서 Paper로 꼭 바꿔야합니다.
+    public List<Paper> attachedPaperList; /* for recursive folding */
 
-    //TODO : 겹치는 면에 대해서(예를들어 2면 이상을 같이 접을 경우의 분할을 생각해야합니다.)
-
-    public List<Paper> Tracking(Paper fix, Paper dynamic)
-    {//TODO : tracking의 검증 필요, 검증은 안해봤음 아직
-        List<Paper> trackgroup = new List<Paper>();
-        trackgroup.Add(dynamic);
-        for (int i = 0; i < dynamic.foldline.Count; i++)
+    /* if Papers share attachedPaperList, return true else false */
+    public static bool PaperAttached(Paper p1, Paper p2)
+    {
+        
+        for (int i=0; i<p1.vertices.Count-1; i++)
         {
-            if (dynamic.foldline[i] == null || dynamic.foldline[i] == fix) //pass
+            int next_index;
+            if (i == p1.vertices.Count - 2)
             {
-                List<Paper> tmppaperlist = Tracking(dynamic, dynamic.foldline[i]);
-                for (int j = 0; j < tmppaperlist.Count; j++)
-                {
-                    trackgroup.Add(tmppaperlist[j]);
-                }
+                next_index = 0;
+            }
+            else
+            {
+                next_index = i + 1;
+            } /* do not use CoG */
+
+            if (p2.vertices.Contains(p1.vertices[i]) && p2.vertices.Contains(p1.vertices[next_index]))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    public static HashSet<Paper> Tracking(Paper fix, Paper dynamic, HashSet<Paper> trackgroup)
+    {
+        trackgroup.Add(dynamic);
+        for (int i = 0; i < dynamic.attachedPaperList.Count; i++)
+        {
+            if (dynamic.attachedPaperList[i] != fix && !trackgroup.Contains(dynamic.attachedPaperList[i]))
+            {
+                Debug.Log("attachedPaperList find : " + dynamic.attachedPaperList[i].gameObject.name);
+                Tracking(fix, dynamic.attachedPaperList[i], trackgroup);
             }
         }
         return trackgroup;
@@ -88,39 +164,30 @@ public class Paper : MonoBehaviour
 
         if (startindex == -1 || endindex == -1)
         {
-            //Debug.LogError("start, endindex fault");
             return false; // 직선 상에서 분명 좌표를 안잡았음..
         }
 
         //오른쪽 페이퍼 만들기 시작
         List<Vector3> newvertices = new List<Vector3>();
-        List<Paper> newfoldline = new List<Paper>();
         newvertices.Add(startpoint);
-        newfoldline.Add(foldline[startindex]); //주의 : 바꿧습니다.
         for (int t = startindex + 1; t - 1 != endindex; t++)
         {
             if (t == vertices.Count - 1) t = 0;
             newvertices.Add(vertices[t]);
-            newfoldline.Add(foldline[t]);
         }
         newvertices.Add(endpoint);
-        newfoldline.RemoveAt(newfoldline.Count - 1);
 
         makePaper(newvertices);
         //왼쪽 페이퍼 만들기 시작
         List<Vector3> new2vertices = new List<Vector3>();
-        List<Paper> new2foldline = new List<Paper>();
         new2vertices.Add(endpoint);
-        new2foldline.Add(foldline[endindex]); //주의 : 바꿧습니다.
 
         for (int t = endindex + 1; t - 1 != startindex; t++)
         {
             if (t == vertices.Count - 1) t = 0;
             new2vertices.Add(vertices[t]);
-            new2foldline.Add(foldline[t]);
         }
         new2vertices.Add(startpoint);
-        new2foldline.RemoveAt(new2foldline.Count - 1);
 
         makePaper(new2vertices);
 
@@ -131,94 +198,46 @@ public class Paper : MonoBehaviour
         paperList[paperList.Count - 2].transform.rotation = tmpRot;
         paperList[paperList.Count - 1].transform.position = tmpPos;
         paperList[paperList.Count - 1].transform.rotation = tmpRot;
-        paperList[paperList.Count - 2].GetComponent<Paper>().foldline.Add(paperList[paperList.Count - 1].GetComponent<Paper>());
-        paperList[paperList.Count - 1].GetComponent<Paper>().foldline.Add(paperList[paperList.Count - 2].GetComponent<Paper>());
+        paperList[paperList.Count - 2].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 1].GetComponent<Paper>());
+        paperList[paperList.Count - 1].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 2].GetComponent<Paper>());
 
+        for(int i=0; i<attachedPaperList.Count; i++)
+        {
+            if(PaperAttached(paperList[paperList.Count -2].GetComponent<Paper>(), attachedPaperList[i]))
+            {
+                paperList[paperList.Count - 2].GetComponent<Paper>().attachedPaperList.Add(attachedPaperList[i]);
+            }
+
+            if (PaperAttached(paperList[paperList.Count - 1].GetComponent<Paper>(), attachedPaperList[i]))
+            {  
+                paperList[paperList.Count - 1].GetComponent<Paper>().attachedPaperList.Add(attachedPaperList[i]);
+            }
+        }
+        for(int i=0; i<paperList.Count-2; i++)
+        {
+            if (paperList[i].GetComponent<Paper>().attachedPaperList.Contains(this))
+            {
+                if(PaperAttached(paperList[i].GetComponent<Paper>(), paperList[paperList.Count - 2].GetComponent<Paper>()))
+                    paperList[i].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 2].GetComponent<Paper>());
+                if (PaperAttached(paperList[i].GetComponent<Paper>(), paperList[paperList.Count - 1].GetComponent<Paper>()))
+                    paperList[i].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 1].GetComponent<Paper>());
+                paperList[i].GetComponent<Paper>().attachedPaperList.Remove(this);
+            }
+        }
         paperList.Remove(gameObject);
         Destroy(gameObject);
         //TODO : 연결관계 가져오기, 현재의 클래스 지우기
 
-        //paper 잡는 임시 코드입니다 ----
-        //usingPaper = paperList[paperList.Count - 2].GetComponent<Paper>();
         return true;
     }
 
-    public void initPaper(List<Vector3> vertices, List<string> foldstring = null)
-    {
-        /* Make One Paper */
-        //Debug.Log("Paper()");
-
-        gameObject.layer = LayerMask.NameToLayer("PAPER");
-        gameObject.name = "Paper Split " + paperCount++;
-
-        var mf = gameObject.AddComponent<MeshFilter>();
-        var mr = gameObject.AddComponent<MeshRenderer>();
-        var mc = gameObject.AddComponent<MeshCollider>();
-
-        var mesh = new Mesh();
-
-        if (foldstring == null)
-            foldline = new List<Paper>(); //접힌면 다 빈칸채우기
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            foldline.Add(null);
-        }
-
-        Vector3 centermess = Vector3.zero;
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            centermess += vertices[i];
-        }
-        centermess /= vertices.Count;
-        vertices.Add(centermess);
-
-        this.vertices = vertices;
-
-
-        /* Make mesh.triangle use 2D Triangulator and Orthodontist */
-
-        Vector2[] uv = new Vector2[vertices.Count];
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            uv[i].x = vertices[i].x;
-            uv[i].y = vertices[i].y;
-        }
-        int[] triangle = new int[(vertices.Count - 1) * 3]; //무게중심은 제
-
-        for (int i = 0; i < (vertices.Count - 1) * 3; i += 3)
-        {
-            triangle[i] = i / 3;
-            triangle[i + 1] = (i / 3 + 1) % (vertices.Count - 1);
-            triangle[i + 2] = vertices.Count - 1;
-
-        }
-        //Debug.Log(triangle);
-
-
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = triangle;
-
-        mf.mesh = mesh;
-        mr.material.color = new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
-        mr.material.shader = Shader.Find("Custom/Double-Sided-Shader");
-        mesh.uv = uv;
-
-        mc.sharedMesh = mesh;
-        mc.convex = true;
-        mc.isTrigger = true;    
-
-
-
-    }
-    /* End Make One Paper */
+   
 
     public static Vector3 in_paper(Paper P, Vector3 pos)
     {
-        //Debug.Log("before " + pos.ToString());
         var globalVertices = P.GetGlobalVertices();
         var equation = makeEquation.make_plane_equation(new List<Vector3>(){globalVertices[0], globalVertices[1], globalVertices[2]});
         pos = new Vector3(pos.x, pos.y, -(equation[0] * pos.x + equation[1] * pos.y + equation[3]) / equation[2]);
-        //Debug.Log("after "+ pos.ToString());
         var triangles = P.GetComponent<MeshFilter>().mesh.triangles;
         RaycastHit hit = new RaycastHit(); hit.point = pos;
         for (int i=0; i<triangles.Length; i += 3)
@@ -267,7 +286,6 @@ public class Paper : MonoBehaviour
             }
        
         }
-        //Debug.Log("DIST: " + minDistance);
 
         if (minDistance < 0.1)
         {
@@ -284,7 +302,6 @@ public class Paper : MonoBehaviour
                 v2 = globalVertices[0] - globalVertices[minIndex];
             }
 
-            //Debug.Log("PROJECTION: " + (Vector3.Project(v1, v2) + globalVertices[minIndex]).ToString());
             if(sphereCount == 0)
                 return Vector3.Project(v1, v2) + globalVertices[minIndex];
             else
@@ -339,7 +356,6 @@ public class Paper : MonoBehaviour
             isDragging = true;
 
         cursorInitialPosition = Input.mousePosition;
-        Debug.Log("INITIAL");
         StopCoroutine("CheckDrag");
     }
 
@@ -351,7 +367,6 @@ public class Paper : MonoBehaviour
         if (isDragging)
         {
             cursorDeltaPosition = cursorInitialPosition - Input.mousePosition;
-            //Debug.Log(Input.mousePosition);
         }
     }
 }
@@ -359,7 +374,6 @@ public class Paper : MonoBehaviour
 public class FoldPaper : MonoBehaviour
 {
     // Start is called before the first frame update
-    GameObject mainPaper;
     public static GameObject makeSphere(Vector3 pos, Color color, GameObject parent)
     {
         /* Make one sphere with hit and Color */
@@ -422,16 +436,13 @@ public class FoldPaper : MonoBehaviour
             {
                 GameObject hitGO = hit.collider.gameObject;
                 Paper p = hit.collider.gameObject.GetComponent<Paper>();
-                //Debug.Log("PAPER GRAVITY CENTER LOC: " + p.vertices[p.vertices.Count - 1]);
                 Vector3 planePos = Paper.in_paper(p, hit.point);
                 if (planePos != new Vector3(-100, -100, -100))
                 {
                     Vector3 edgePos = Paper.attatch_to_edge(p, planePos);
-                    Debug.Log("Edgepos" + edgePos);
                     if (edgePos != new Vector3(-100, -100, -100) && (Paper.usingPaper == p || Paper.sphereCount == 0))
                     {
                         makeSphere(edgePos, Color.blue, hitGO);
-                 
                         Paper.sphereCount++;
                         Paper.usingPaper = p;
                     }
@@ -451,43 +462,7 @@ public class FoldPaper : MonoBehaviour
             /* End Click*/
         }
     }
-    //MinSeok
-    /// <summary>
-    /// When click, find which foldpaper user is clicking now.
-    /// </summary>
-    void find_pos_noSphere()
-    {
-        RaycastHit hit;
-        Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
-
-        var paperLayer = LayerMask.NameToLayer("PAPER");
-        if (Physics.Raycast(ray, out hit, 100.0f, 1 << paperLayer))
-        {
-            if (hit.collider.name.Contains("Paper"))
-            {
-                GameObject hitGO = hit.collider.gameObject;
-                Paper p = hit.collider.gameObject.GetComponent<Paper>();
-                //Debug.Log("PAPER GRAVITY CENTER LOC: " + p.vertices[p.vertices.Count - 1]);
-                Vector3 planePos = Paper.in_paper(p, hit.point);
-                if (planePos != new Vector3(-1, -1, -1))
-                {
-
-                    return;
-                }
-                else
-                {
-                    hitGO.GetComponent<MeshCollider>().enabled = false;
-                    find_pos();
-                    hitGO.GetComponent<MeshCollider>().enabled = true;
-                }
-            }
-            else
-            {
-                return;
-            }
-            /* End Click*/
-        }
-    }
+ 
 
     /// <summary>
     /// Sets usingpaper to a paper hit by raycast.
@@ -504,11 +479,18 @@ public class FoldPaper : MonoBehaviour
             {
                 GameObject hitGO = hit.collider.gameObject;
                 Paper p = hit.collider.gameObject.GetComponent<Paper>();
-                //Debug.Log("PAPER GRAVITY CENTER LOC: " + p.vertices[p.vertices.Count - 1]);
                 Vector3 planePos = Paper.in_paper(p, hit.point);
                 if (planePos != new Vector3(-100, -100, -100))
                 {
                     Paper.usingPaper = p;
+                    if(Paper.paperList[Paper.paperList.Count-1].name == p.gameObject.name)
+                    {
+                        Paper.fixedPaper = Paper.paperList[Paper.paperList.Count - 2].GetComponent<Paper>();
+                    }
+                    else
+                    {
+                        Paper.fixedPaper = Paper.paperList[Paper.paperList.Count - 1].GetComponent<Paper>();
+                    }
                     return;
                 }
                 else
@@ -531,11 +513,12 @@ public class FoldPaper : MonoBehaviour
     public static Vector3 pos2;
     public static Vector3 rotPos1;
     public static Vector3 rotPos2;
-
+    public static HashSet<Paper> rotPapers;
     void Update()
     {
         //민석
         //If click occurs,
+        
         if (Input.GetMouseButtonDown(0))
         {
             //If there's  1 or less sphere, and is not cutting paper yet, try to get another sphere.
@@ -549,20 +532,27 @@ public class FoldPaper : MonoBehaviour
                 //If not cut foldpaper yet, start cutting it.
                 if (!isCut)
                 {
-                    Debug.Log("isCut");
                     var posList = spherePosLocal(Paper.usingPaper.gameObject);
                     rotPos1 = posList[0];
                     rotPos2 = posList[1];
                     pos1 = posList[2];
                     pos2 = posList[3];
                     Paper.usingPaper.Folding(pos1, pos2);
+
                     isCut = true;
                 }
                 //If cutting enabled, find paper and start dragging it.
                 else
                 {
-                    Debug.Log("");
                     find_paper();
+                    Paper.setFIxedPaper();
+                    rotPapers = Paper.Tracking(Paper.fixedPaper, Paper.usingPaper, new HashSet<Paper>());
+                    string rotPaperstr = "";
+                    foreach (var p in rotPapers)
+                    {
+                        rotPaperstr += p.gameObject.name + " ";
+                    }
+                    Debug.Log("rotpapers : " + rotPaperstr);
                 }
             }
         }
@@ -570,17 +560,19 @@ public class FoldPaper : MonoBehaviour
         //If user is dragging, rotate it.
         if (Paper.isDragging)
         {
-            
             Vector2 campos1 = Camera.allCameras[0].WorldToScreenPoint(pos1);
             Vector2 campos2 = Camera.allCameras[0].WorldToScreenPoint(pos2);
             float angle = Mathf.Acos(Vector2.Dot(Paper.cursorDeltaPosition, campos2 - campos1) / (((Vector2)Paper.cursorDeltaPosition).magnitude * (campos2 - campos1).magnitude));
             float direction = Mathf.Sign(Vector3.Cross(Paper.cursorDeltaPosition, campos2 - campos1).z);
             float cosine = direction * Mathf.Abs(Mathf.Sin(angle));
             float value = Paper.cursorDeltaPosition.magnitude * cosine / 66;
-            //Debug.Log(direction);
             if (double.IsNaN(value))
                 value = 0;
-            Paper.usingPaper.gameObject.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
+
+            foreach(var p in rotPapers)
+            {
+                p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
+            }
         }
     }
 }

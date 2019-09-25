@@ -21,7 +21,7 @@ public class makeEquation : MonoBehaviour
         retList.Add(C);
         retList.Add(D);
 
-        Debug.Log("Plane Equation Result:  A : " + A + ", " + "B : " + B + ", " + "C : " + C + ", " + "D : " + D + ", ");
+        //Debug.Log("Plane Equation Result:  A : " + A + ", " + "B : " + B + ", " + "C : " + C + ", " + "D : " + D + ", ");
         return retList;
     }
 
@@ -39,13 +39,13 @@ public class makeEquation : MonoBehaviour
         retList.Add(B);
         retList.Add(C);
 
-        Debug.Log("A : " + A + ", " + "B : " + B + ", " + "C : " + C + ", ");
+        //Debug.Log("A : " + A + ", " + "B : " + B + ", " + "C : " + C + ", ");
         return retList;
     }
     public static bool in_plane(List<float> equation, Vector3 vertex)
     {
         float A = equation[0]; float B = equation[1]; float C = equation[2]; float D = equation[3];
-        Debug.Log("Is It On The Plane? :  " + ((A * vertex.x + B * vertex.y + C * vertex.z + D) == 0));
+        //Debug.Log("Is It On The Plane? :  " + ((A * vertex.x + B * vertex.y + C * vertex.z + D) == 0));
         return (A * vertex.x + B * vertex.y + C * vertex.z + D) == 0;
     }
 
@@ -78,7 +78,7 @@ public class makeEquation : MonoBehaviour
                 for (int j = 0; j < vertices2D.Length; j++)
                 {
                     vertices2D[j] = new Vector2(vertices[j][(i + 1) % 3], vertices[j][(i + 2) % 3]);
-                    Debug.Log(vertices2D[j]);
+                    //Debug.Log(vertices2D[j]);
 
                 }
                 break;
@@ -124,7 +124,7 @@ public class makeEquation : MonoBehaviour
                 for (int j = 0; j < vertices2D.Length; j++)
                 {
                     vertices2D[j] = new Vector2(vertices[j][(i + 1) % 3], vertices[j][(i + 2) % 3]);
-                    Debug.Log(vertices2D[j]);
+                    //Debug.Log(vertices2D[j]);
 
                 }
                 break;
@@ -181,7 +181,7 @@ public class makeEquation : MonoBehaviour
                 }
             }
         }
-        Debug.Log(count);
+        //Debug.Log(count);
     }
     // Start is called before the first frame update
 
