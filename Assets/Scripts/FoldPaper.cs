@@ -404,23 +404,6 @@ public class FoldPaper : MonoBehaviour
 
         return retList;
     }
-    void Start()
-    {
-        int width = 1, height = 1;
-
-        List<Vector3> vertices = new List<Vector3>
-        {
-            new Vector3(0,0,0),
-            new Vector3(width,0,0),
-            new Vector3(width,height,0),
-            new Vector3(0,height,0),
-        };
-
-        Paper.makePaper(vertices);
-        
-
-    }
-
 
     /* raycast to paper ignore convex */
     void setSphere()
@@ -483,9 +466,9 @@ public class FoldPaper : MonoBehaviour
                 Vector3 planePos = Paper.in_paper(p, hit.point);
                 if (planePos != new Vector3(-100, -100, -100))
                 {
-               
+
                     Paper.usingPaper = p;
-                    if(Paper.paperList[Paper.paperList.Count-1].name == p.gameObject.name)
+                    if (Paper.paperList[Paper.paperList.Count - 1].name == p.gameObject.name)
                     {
                         Paper.fixedPaper = Paper.paperList[Paper.paperList.Count - 2].GetComponent<Paper>();
                     }
@@ -509,39 +492,6 @@ public class FoldPaper : MonoBehaviour
             /* End Click*/
         }
     }
-
-    public static bool isCut = false;
-    public static Vector3 pos1;             //local positions
-    public static Vector3 pos2;
-    public static Vector3 rotPos1;          //real positions
-    public static Vector3 rotPos2;          
-    public static HashSet<Paper> rotPapers; //rotating papers
-    void Update()
-    {
-        //민석
-        //If click occurs,
-        
-        if (Input.GetMouseButtonDown(0))
-        {
-            //If there's  1 or less sphere, and is not cutting paper yet, try to get another sphere.
-            if (Paper.sphereCount < 2)
-            {
-                setSphere();
-            }
-            //If found all,
-            if (Paper.sphereCount == 2)
-            {
-               setRot();
-            }
-        }
-
-        //If user is dragging, rotate it.
-        if (Paper.isDragging)
-        {
-            rotatePaper();
-        }
-    }
-
     /* set rotPositions and rotPaper */
     public void setRot()
     {
@@ -591,4 +541,54 @@ public class FoldPaper : MonoBehaviour
             p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
         }
     }
+    void Start()
+    {
+        int width = 1, height = 1;
+
+        List<Vector3> vertices = new List<Vector3>
+        {
+            new Vector3(0,0,0),
+            new Vector3(width,0,0),
+            new Vector3(width,height,0),
+            new Vector3(0,height,0),
+        };
+
+        Paper.makePaper(vertices);
+        
+
+    }
+
+    public static bool isCut = false;
+    public static Vector3 pos1;             //local positions
+    public static Vector3 pos2;
+    public static Vector3 rotPos1;          //real positions
+    public static Vector3 rotPos2;          
+    public static HashSet<Paper> rotPapers; //rotating papers
+    void Update()
+    {
+        //민석
+        //If click occurs,
+        
+        if (Input.GetMouseButtonDown(0))
+        {
+            //If there's  1 or less sphere, and is not cutting paper yet, try to get another sphere.
+            if (Paper.sphereCount < 2)
+            {
+                setSphere();
+            }
+            //If found all,
+            if (Paper.sphereCount == 2)
+            {
+               setRot();
+            }
+        }
+
+        //If user is dragging, rotate it.
+        if (Paper.isDragging)
+        {
+            rotatePaper();
+        }
+    }
+
+   
 }
