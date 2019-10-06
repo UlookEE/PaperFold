@@ -527,12 +527,12 @@ public class FoldPaper : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             //If there's  1 or less sphere, and is not cutting paper yet, try to get another sphere.
-            if (Paper.sphereCount < 2 && !isCut)
+            if (Paper.sphereCount < 2)
             {
                 find_pos();
             }
-            //If found all,
-            if (Paper.sphereCount >= 2)
+            //If set 2 sphere
+            if (Paper.sphereCount == 2)
             {
                setRot();
             }
