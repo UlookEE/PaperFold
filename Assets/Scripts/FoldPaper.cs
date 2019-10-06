@@ -482,6 +482,7 @@ public class FoldPaper : MonoBehaviour
                 Vector3 planePos = Paper.in_paper(p, hit.point);
                 if (planePos != new Vector3(-100, -100, -100))
                 {
+               
                     Paper.usingPaper = p;
                     if(Paper.paperList[Paper.paperList.Count-1].name == p.gameObject.name)
                     {
@@ -546,13 +547,16 @@ public class FoldPaper : MonoBehaviour
                 {
                     find_paper();
                     Paper.setFIxedPaper();
-                    rotPapers = Paper.Tracking(Paper.fixedPaper, Paper.usingPaper, new HashSet<Paper>());
-                    string rotPaperstr = "";
-                    foreach (var p in rotPapers)
+                    if (Paper.usingPaper != null)
                     {
-                        rotPaperstr += p.gameObject.name + " ";
+                        rotPapers = Paper.Tracking(Paper.fixedPaper, Paper.usingPaper, new HashSet<Paper>());
+                        string rotPaperstr = "";
+                        foreach (var p in rotPapers)
+                        {
+                            rotPaperstr += p.gameObject.name + " ";
+                        }
+                        Debug.Log("rotpapers : " + rotPaperstr);
                     }
-                    Debug.Log("rotpapers : " + rotPaperstr);
                 }
             }
         }
