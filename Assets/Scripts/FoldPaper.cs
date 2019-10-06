@@ -534,34 +534,7 @@ public class FoldPaper : MonoBehaviour
             //If found all,
             if (Paper.sphereCount >= 2)
             {
-                //If not cut foldpaper yet, start cutting it.
-                if (!isCut)
-                {
-                    var posList = spherePosLocal(Paper.usingPaper.gameObject);
-                    rotPos1 = posList[0];
-                    rotPos2 = posList[1];
-                    pos1 = posList[2];
-                    pos2 = posList[3];
-                    Paper.usingPaper.Folding(pos1, pos2);
-
-                    isCut = true;
-                }
-                //If cutting enabled, find paper and start dragging it.
-                else
-                {
-                    find_paper();
-                    Paper.setFIxedPaper();
-                    if (Paper.usingPaper != null)
-                    {
-                        rotPapers = Paper.Tracking(Paper.fixedPaper, Paper.usingPaper, new HashSet<Paper>());
-                        string rotPaperstr = "";
-                        foreach (var p in rotPapers)
-                        {
-                            rotPaperstr += p.gameObject.name + " ";
-                        }
-                        Debug.Log("rotpapers : " + rotPaperstr);
-                    }
-                }
+               setRot();
             }
         }
 
@@ -572,6 +545,38 @@ public class FoldPaper : MonoBehaviour
         }
     }
 
+    /* set rotPositions and rotPaper */
+    public void setRot()
+    {
+        //If not cut foldpaper yet, start cutting it.
+        if (!isCut)
+        {
+            var posList = spherePosLocal(Paper.usingPaper.gameObject);
+            rotPos1 = posList[0];
+            rotPos2 = posList[1];
+            pos1 = posList[2];
+            pos2 = posList[3];
+            Paper.usingPaper.Folding(pos1, pos2);
+
+            isCut = true;
+        }
+        //If cutting enabled, find paper and start dragging it.
+        else
+        {
+            find_paper();
+            Paper.setFIxedPaper();
+            if (Paper.usingPaper != null)
+            {
+                rotPapers = Paper.Tracking(Paper.fixedPaper, Paper.usingPaper, new HashSet<Paper>());
+                string rotPaperstr = "";
+                foreach (var p in rotPapers)
+                {
+                    rotPaperstr += p.gameObject.name + " ";
+                }
+                Debug.Log("rotpapers : " + rotPaperstr);
+            }
+        }
+    }
     /* rotate paper using screen drag */
     public void rotatePaper()
     {
