@@ -568,19 +568,25 @@ public class FoldPaper : MonoBehaviour
         //If user is dragging, rotate it.
         if (Paper.isDragging)
         {
-            Vector2 campos1 = Camera.allCameras[0].WorldToScreenPoint(pos1);
-            Vector2 campos2 = Camera.allCameras[0].WorldToScreenPoint(pos2);
-            float angle = Mathf.Acos(Vector2.Dot(Paper.cursorDeltaPosition, campos2 - campos1) / (((Vector2)Paper.cursorDeltaPosition).magnitude * (campos2 - campos1).magnitude));
-            float direction = Mathf.Sign(Vector3.Cross(Paper.cursorDeltaPosition, campos2 - campos1).z);
-            float cosine = direction * Mathf.Abs(Mathf.Sin(angle));
-            float value = Paper.cursorDeltaPosition.magnitude * cosine / 66;
-            if (double.IsNaN(value))
-                value = 0;
+            rotatePaper();
+        }
+    }
 
-            foreach(var p in rotPapers)
-            {
-                p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
-            }
+    /* rotate paper using screen drag */
+    public void rotatePaper()
+    {
+        Vector2 campos1 = Camera.allCameras[0].WorldToScreenPoint(pos1);
+        Vector2 campos2 = Camera.allCameras[0].WorldToScreenPoint(pos2);
+        float angle = Mathf.Acos(Vector2.Dot(Paper.cursorDeltaPosition, campos2 - campos1) / (((Vector2)Paper.cursorDeltaPosition).magnitude * (campos2 - campos1).magnitude));
+        float direction = Mathf.Sign(Vector3.Cross(Paper.cursorDeltaPosition, campos2 - campos1).z);
+        float cosine = direction * Mathf.Abs(Mathf.Sin(angle));
+        float value = Paper.cursorDeltaPosition.magnitude * cosine / 66;
+        if (double.IsNaN(value))
+            value = 0;
+
+        foreach (var p in rotPapers)
+        {
+            p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
         }
     }
 }
