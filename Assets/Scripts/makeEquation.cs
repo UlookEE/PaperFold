@@ -217,7 +217,6 @@ public class makeEquation : MonoBehaviour
     {
         Vector3 d = line[1] - line[0];
         Vector3 p = dot - line[0];
-
         return Vector3.Cross(d, p) == Vector3.zero;
     }
 

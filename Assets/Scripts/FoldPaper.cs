@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class Paper : MonoBehaviour
 {
-    static int paperCount = 0;      // for gameobject name
-    public List<Vector3> vertices;  // last vertice is CoG
-    public static int sphereCount = 0;
-    public static Paper usingPaper;
-    public static Paper fixedPaper; 
+    static int paperCount = 0;                                          // for gameobject name
+    public List<Vector3> vertices;                                      // last vertice is CoG
+    public static int sphereCount = 0;                                  // if vertex of foldline selected, spherecout++
+    public static Paper usingPaper;                                     // one paper set of rotating papers
+    public static Paper fixedPaper;                                     // one paper set of not rotating papers
     public static List<GameObject> paperList = new List<GameObject>();  // entire paper list
 
     /* Make One Paper */
@@ -69,7 +69,7 @@ public class Paper : MonoBehaviour
         GameObject tmp = new GameObject();
         tmp.AddComponent<Paper>();
         tmp.GetComponent<Paper>().initPaper(vertices);
-        paperList.Add(tmp);
+        paperList.Add(tmp);     
     }
 
     /* set fixedPaper : fixedPaper is not rotate */
@@ -100,10 +100,9 @@ public class Paper : MonoBehaviour
     public int zindex = 0;
     public List<Paper> attachedPaperList; /* for recursive folding */
 
-    /* if Papers share attachedPaperList, return true else false */
+    /* if Papers share edge, return true else false */
     public static bool PaperAttached(Paper p1, Paper p2)
     {
-        
         for (int i=0; i<p1.vertices.Count-1; i++)
         {
             int next_index;
@@ -231,8 +230,8 @@ public class Paper : MonoBehaviour
         return true;
     }
 
-   
-
+    
+    /* if pos in paper, return pos */
     public static Vector3 in_paper(Paper P, Vector3 pos)
     {
         var globalVertices = P.GetGlobalVertices();
@@ -251,6 +250,7 @@ public class Paper : MonoBehaviour
         return new Vector3(-100,-100,-100);
     }
 
+    /* if pos is close to edge, return pos correct pos attatch to edge */
     public static Vector3 attatch_to_edge(Paper P, Vector3 pos)
     {
         var globalVertices = P.GetGlobalVertices();
@@ -424,6 +424,8 @@ public class FoldPaper : MonoBehaviour
     // Update is called once per frame
 
 
+
+    /* raycast to paper ignore convex */
     void find_pos()
     {
         RaycastHit hit;
@@ -462,11 +464,13 @@ public class FoldPaper : MonoBehaviour
             /* End Click*/
         }
     }
- 
+
 
     /// <summary>
     /// Sets usingpaper to a paper hit by raycast.
     /// </summary>
+    /// 
+    /* raycast to paper ignore convex */
     void find_paper()
     {
         RaycastHit hit;
@@ -510,11 +514,11 @@ public class FoldPaper : MonoBehaviour
     }
 
     public static bool isCut = false;
-    public static Vector3 pos1;
+    public static Vector3 pos1;             //local positions
     public static Vector3 pos2;
-    public static Vector3 rotPos1;
-    public static Vector3 rotPos2;
-    public static HashSet<Paper> rotPapers;
+    public static Vector3 rotPos1;          //real positions
+    public static Vector3 rotPos2;          
+    public static HashSet<Paper> rotPapers; //rotating papers
     void Update()
     {
         //민석
