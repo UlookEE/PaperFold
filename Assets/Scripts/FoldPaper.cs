@@ -421,12 +421,9 @@ public class FoldPaper : MonoBehaviour
 
     }
 
-    // Update is called once per frame
-
-
 
     /* raycast to paper ignore convex */
-    void find_pos()
+    void setSphere()
     {
         RaycastHit hit;
         Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
@@ -453,7 +450,7 @@ public class FoldPaper : MonoBehaviour
                 else
                 {
                     hitGO.GetComponent<MeshCollider>().enabled = false;
-                    find_pos();
+                    setSphere();
                     hitGO.GetComponent<MeshCollider>().enabled = true;
                 }
             }
@@ -529,9 +526,9 @@ public class FoldPaper : MonoBehaviour
             //If there's  1 or less sphere, and is not cutting paper yet, try to get another sphere.
             if (Paper.sphereCount < 2)
             {
-                find_pos();
+                setSphere();
             }
-            //If set 2 sphere
+            //If found all,
             if (Paper.sphereCount == 2)
             {
                setRot();
