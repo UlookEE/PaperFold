@@ -26,7 +26,7 @@ public class Coordinate : MonoBehaviour
     void Start()
     {
         transform.position = new Vector3(4, 8, 12);
-        for (float i = 1.0f; i < 3.0f; i = i + 0.05f)
+        for (float i = 1.0f; i < 3.0f; i += 0.05f)
         {
             makeSphere(new Vector3(i, i * 2, i * 3), Color.red);
         }
@@ -39,6 +39,6 @@ public class Coordinate : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        g.transform.RotateAround(d1, d2 - d1, 60*Time.deltaTime);
+        //g.transform.RotateAround(d1, d2 - d1, 60*Time.deltaTime);
     }
 }

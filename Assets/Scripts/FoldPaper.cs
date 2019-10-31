@@ -69,13 +69,13 @@ public class Paper : MonoBehaviour
         GameObject tmp = new GameObject();
         tmp.AddComponent<Paper>();
         tmp.GetComponent<Paper>().initPaper(vertices);
-        paperList.Add(tmp);     
+        paperList.Add(tmp);
     }
 
     /* set fixedPaper : fixedPaper is not rotate */
-    public static void setFIxedPaper ()
+    public static void setFIxedPaper()
     {
-        if(usingPaper == paperList[paperList.Count - 1].GetComponent<Paper>())
+        if (usingPaper == paperList[paperList.Count - 1].GetComponent<Paper>())
         {
             fixedPaper = paperList[paperList.Count - 2].GetComponent<Paper>();
         }
@@ -89,7 +89,7 @@ public class Paper : MonoBehaviour
     public List<Vector3> GetGlobalVertices()
     {
         List<Vector3> list = new List<Vector3>();
-        foreach(var v in vertices)
+        foreach (var v in vertices)
         {
             Vector3 vector = this.transform.TransformPoint(v);
             list.Add(vector);
@@ -103,7 +103,7 @@ public class Paper : MonoBehaviour
     /* if Papers share edge, return true else false */
     public static bool PaperAttached(Paper p1, Paper p2)
     {
-        for (int i=0; i<p1.vertices.Count-1; i++)
+        for (int i = 0; i < p1.vertices.Count - 1; i++)
         {
             int next_index;
             if (i == p1.vertices.Count - 2)
@@ -200,23 +200,23 @@ public class Paper : MonoBehaviour
         paperList[paperList.Count - 2].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 1].GetComponent<Paper>());
         paperList[paperList.Count - 1].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 2].GetComponent<Paper>());
 
-        for(int i=0; i<attachedPaperList.Count; i++)
+        for (int i = 0; i < attachedPaperList.Count; i++)
         {
-            if(PaperAttached(paperList[paperList.Count -2].GetComponent<Paper>(), attachedPaperList[i]))
+            if (PaperAttached(paperList[paperList.Count - 2].GetComponent<Paper>(), attachedPaperList[i]))
             {
                 paperList[paperList.Count - 2].GetComponent<Paper>().attachedPaperList.Add(attachedPaperList[i]);
             }
 
             if (PaperAttached(paperList[paperList.Count - 1].GetComponent<Paper>(), attachedPaperList[i]))
-            {  
+            {
                 paperList[paperList.Count - 1].GetComponent<Paper>().attachedPaperList.Add(attachedPaperList[i]);
             }
         }
-        for(int i=0; i<paperList.Count-2; i++)
+        for (int i = 0; i < paperList.Count - 2; i++)
         {
             if (paperList[i].GetComponent<Paper>().attachedPaperList.Contains(this))
             {
-                if(PaperAttached(paperList[i].GetComponent<Paper>(), paperList[paperList.Count - 2].GetComponent<Paper>()))
+                if (PaperAttached(paperList[i].GetComponent<Paper>(), paperList[paperList.Count - 2].GetComponent<Paper>()))
                     paperList[i].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 2].GetComponent<Paper>());
                 if (PaperAttached(paperList[i].GetComponent<Paper>(), paperList[paperList.Count - 1].GetComponent<Paper>()))
                     paperList[i].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 1].GetComponent<Paper>());
@@ -230,25 +230,26 @@ public class Paper : MonoBehaviour
         return true;
     }
 
-    
+
     /* if pos in paper, return pos */
     public static Vector3 in_paper(Paper P, Vector3 pos)
     {
         var globalVertices = P.GetGlobalVertices();
-        var equation = makeEquation.make_plane_equation(new List<Vector3>(){globalVertices[0], globalVertices[1], globalVertices[2]});
+        var equation = makeEquation.make_plane_equation(new List<Vector3>() { globalVertices[0], globalVertices[1], globalVertices[2] });
         pos = new Vector3(pos.x, pos.y, -(equation[0] * pos.x + equation[1] * pos.y + equation[3]) / equation[2]);
         var triangles = P.GetComponent<MeshFilter>().mesh.triangles;
         RaycastHit hit = new RaycastHit(); hit.point = pos;
-        for (int i=0; i<triangles.Length; i += 3)
+        for (int i = 0; i < triangles.Length; i += 3)
         {
-            if(makeEquation.in_triangle(pos, new List<Vector3>() { globalVertices[triangles[i]], globalVertices[triangles[i + 1]], globalVertices[triangles[i + 2]] }))
+            if (makeEquation.in_triangle(pos, new List<Vector3>() { globalVertices[triangles[i]], globalVertices[triangles[i + 1]], globalVertices[triangles[i + 2]] }))
             {
                 return pos;
             }
 
         }
-        return new Vector3(-100,-100,-100);
+        return new Vector3(-100, -100, -100);
     }
+
 
     /* if pos is close to edge, return pos correct pos attatch to edge */
     public static Vector3 attatch_to_edge(Paper P, Vector3 pos)
@@ -256,7 +257,7 @@ public class Paper : MonoBehaviour
         var globalVertices = P.GetGlobalVertices();
         float minDistance = 100;
         int minIndex = -1;
-        for (int i=0; i<globalVertices.Count-1; i++)
+        for (int i = 0; i < globalVertices.Count - 1; i++)
         {
             Vector3 v1;
             Vector3 v2;
@@ -274,17 +275,17 @@ public class Paper : MonoBehaviour
             }
 
             float angle = Vector3.Angle(v1, v2);
-            if (angle>=0 && angle <= 90)
+            if (angle >= 0 && angle <= 90)
             {
-                float distance = v1.magnitude * v2.magnitude * Mathf.Sin(angle*Mathf.Deg2Rad);
-                
-                if(distance < minDistance)
+                float distance = v1.magnitude * v2.magnitude * Mathf.Sin(angle * Mathf.Deg2Rad);
+
+                if (distance < minDistance)
                 {
                     minDistance = distance;
                     minIndex = i;
                 }
             }
-       
+
         }
 
         if (minDistance < 0.1)
@@ -302,7 +303,7 @@ public class Paper : MonoBehaviour
                 v2 = globalVertices[0] - globalVertices[minIndex];
             }
 
-            if(sphereCount == 0)
+            if (sphereCount == 0)
                 return Vector3.Project(v1, v2) + globalVertices[minIndex];
             else
             {
@@ -352,7 +353,7 @@ public class Paper : MonoBehaviour
             yield return new WaitForSeconds(0.01f);
         }
 
-        if(sphereCount ==2)
+        if (sphereCount == 2)
             isDragging = true;
 
         cursorInitialPosition = Input.mousePosition;
@@ -536,10 +537,59 @@ public class FoldPaper : MonoBehaviour
         if (double.IsNaN(value))
             value = 0;
 
+        //Cross check.
+        bool isCrossed = false;
+
         foreach (var p in rotPapers)
         {
-            p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
+            isCrossed = CrossCheck(p);
         }
+
+        if (!isCrossed)
+        {
+            foreach (var p in rotPapers)
+            {
+                p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
+            }
+        }
+    }
+    /* check whether two papers are crossed */
+    public bool CrossCheck(Paper p)
+    {
+        //Instantiates object.
+        GameObject obj = new GameObject();
+        obj.transform.SetParent(p.transform);
+        obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+        Dot dot = obj.AddComponent<Dot>();
+        dot.paper = p;
+
+        int count = 0;
+        while (count < 10)
+        {
+            //Sets position of the object.
+            obj.transform.localPosition = new Vector3(Random.Range(0f, 1f), Random.Range(0f, 1f), 0f);
+
+            //If the position of the object is not located to the paper, continue.
+            if (Paper.in_paper(p, obj.transform.position) == new Vector3(-100, -100, -100))
+            {
+                continue;
+            }
+
+            //Else, Assigns position to dot instance.
+            dot.pos = obj.transform.position;
+
+            count++;
+
+            //Check whether it's crossed.
+            if (dot.IsCrossed())
+            {
+                Destroy(obj);
+                return true;
+            }
+        }
+
+        Destroy(obj);
+        return false;
     }
     void Start()
     {
@@ -554,7 +604,7 @@ public class FoldPaper : MonoBehaviour
         };
 
         Paper.makePaper(vertices);
-        
+
 
     }
 
@@ -562,13 +612,13 @@ public class FoldPaper : MonoBehaviour
     public static Vector3 pos1;             //local positions
     public static Vector3 pos2;
     public static Vector3 rotPos1;          //real positions
-    public static Vector3 rotPos2;          
+    public static Vector3 rotPos2;
     public static HashSet<Paper> rotPapers; //rotating papers
     void Update()
     {
         //민석
         //If click occurs,
-        
+
         if (Input.GetMouseButtonDown(0))
         {
             //If there's  1 or less sphere, and is not cutting paper yet, try to get another sphere.
@@ -579,7 +629,7 @@ public class FoldPaper : MonoBehaviour
             //If found all,
             if (Paper.sphereCount == 2)
             {
-               setRot();
+                setRot();
             }
         }
 
@@ -589,6 +639,4 @@ public class FoldPaper : MonoBehaviour
             rotatePaper();
         }
     }
-
-   
 }
