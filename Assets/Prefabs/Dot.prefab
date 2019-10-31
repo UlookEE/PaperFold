@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7766119019457096968}
   - component: {fileID: -4940521910760851658}
+  - component: {fileID: 7471844210053587990}
   m_Layer: 0
   m_Name: Dot
   m_TagString: Untagged
@@ -45,3 +46,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   paper: {fileID: 0}
   pos: {x: 0, y: 0, z: 0}
+  dotCollider: {fileID: 0}
+--- !u!135 &7471844210053587990
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 620632050254408916}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}

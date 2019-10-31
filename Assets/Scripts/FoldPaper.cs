@@ -231,7 +231,7 @@ public class Paper : MonoBehaviour
     }
 
 
-    /* if pos in paper, return pos */
+    /* if world pos in paper, return pos */
     public static Vector3 in_paper(Paper P, Vector3 pos)
     {
         var globalVertices = P.GetGlobalVertices();
@@ -522,6 +522,14 @@ public class FoldPaper : MonoBehaviour
                     rotPaperstr += p.gameObject.name + " ";
                 }
                 Debug.Log("rotpapers : " + rotPaperstr);
+
+                fixedPapers = Paper.Tracking(Paper.usingPaper, Paper.fixedPaper, new HashSet<Paper>());
+                string fixPaperstr = "";
+                foreach (var p in fixedPapers)
+                {
+                    fixPaperstr += p.gameObject.name + " ";
+                }
+                Debug.Log("fixedpapers : " + fixPaperstr);
             }
         }
     }
@@ -542,7 +550,11 @@ public class FoldPaper : MonoBehaviour
 
         foreach (var p in rotPapers)
         {
-            isCrossed = CrossCheck(p);
+            foreach(var q in fixedPapers)
+            {
+                isCrossed = CrossCheck(p, q, value);
+            }
+            
         }
 
         if (!isCrossed)
@@ -554,34 +566,33 @@ public class FoldPaper : MonoBehaviour
         }
     }
     /* check whether two papers are crossed */
-    public bool CrossCheck(Paper p)
+    public bool CrossCheck(Paper rotPaper, Paper fixedPaper, float value)
     {
         //Instantiates object.
         GameObject obj = new GameObject();
-        obj.transform.SetParent(p.transform);
+        obj.transform.SetParent(rotPaper.transform);
         obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
         Dot dot = obj.AddComponent<Dot>();
-        dot.paper = p;
 
         int count = 0;
-        while (count < 10)
+        while (count < 100)
         {
             //Sets position of the object.
             obj.transform.localPosition = new Vector3(Random.Range(0f, 1f), Random.Range(0f, 1f), 0f);
 
             //If the position of the object is not located to the paper, continue.
-            if (Paper.in_paper(p, obj.transform.position) == new Vector3(-100, -100, -100))
+            if (Paper.in_paper(rotPaper, obj.transform.position) == new Vector3(-100, -100, -100))
             {
                 continue;
             }
 
-            //Else, Assigns position to dot instance.
+            //Else, Assigns world position to dot instance.
             dot.pos = obj.transform.position;
 
             count++;
 
             //Check whether it's crossed.
-            if (dot.IsCrossed())
+            if (dot.IsCrossed(rotPaper, fixedPaper, value))
             {
                 Destroy(obj);
                 return true;
@@ -609,11 +620,12 @@ public class FoldPaper : MonoBehaviour
     }
 
     public static bool isCut = false;
-    public static Vector3 pos1;             //local positions
+    public static Vector3 pos1;                 //local positions
     public static Vector3 pos2;
-    public static Vector3 rotPos1;          //real positions
+    public static Vector3 rotPos1;              //real positions
     public static Vector3 rotPos2;
-    public static HashSet<Paper> rotPapers; //rotating papers
+    public static HashSet<Paper> rotPapers;     //rotating papers
+    public static HashSet<Paper> fixedPapers;   //fixed papers;
     void Update()
     {
         //민석
