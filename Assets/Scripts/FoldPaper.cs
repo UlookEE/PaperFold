@@ -12,7 +12,7 @@ public class Paper : MonoBehaviour
     public static List<GameObject> paperList = new List<GameObject>();  // entire paper list
 
     /* Make One Paper */
-    public void initPaper(List<Vector3> vertices, List<string> foldstring = null)
+    public void InitPaper(List<Vector3> vertices, List<string> foldstring = null)
     {
         gameObject.layer = LayerMask.NameToLayer("PAPER");
         gameObject.name = "Paper Split " + paperCount++;
@@ -64,18 +64,18 @@ public class Paper : MonoBehaviour
         mc.isTrigger = true;
     }
     /* make paper with gameobject */
-    public static void makePaper(List<Vector3> vertices)
+    public static void MakePaper(List<Vector3> vertices)
     {
         GameObject tmp = new GameObject();
         tmp.AddComponent<Paper>();
-        tmp.GetComponent<Paper>().initPaper(vertices);
-        paperList.Add(tmp);     
+        tmp.GetComponent<Paper>().InitPaper(vertices);
+        paperList.Add(tmp);
     }
 
     /* set fixedPaper : fixedPaper is not rotate */
-    public static void setFIxedPaper ()
+    public static void SetFixedPaper()
     {
-        if(usingPaper == paperList[paperList.Count - 1].GetComponent<Paper>())
+        if (usingPaper == paperList[paperList.Count - 1].GetComponent<Paper>())
         {
             fixedPaper = paperList[paperList.Count - 2].GetComponent<Paper>();
         }
@@ -89,7 +89,7 @@ public class Paper : MonoBehaviour
     public List<Vector3> GetGlobalVertices()
     {
         List<Vector3> list = new List<Vector3>();
-        foreach(var v in vertices)
+        foreach (var v in vertices)
         {
             Vector3 vector = this.transform.TransformPoint(v);
             list.Add(vector);
@@ -103,7 +103,7 @@ public class Paper : MonoBehaviour
     /* if Papers share edge, return true else false */
     public static bool PaperAttached(Paper p1, Paper p2)
     {
-        for (int i=0; i<p1.vertices.Count-1; i++)
+        for (int i = 0; i < p1.vertices.Count - 1; i++)
         {
             int next_index;
             if (i == p1.vertices.Count - 2)
@@ -176,7 +176,7 @@ public class Paper : MonoBehaviour
         }
         newvertices.Add(endpoint);
 
-        makePaper(newvertices);
+        MakePaper(newvertices);
         //왼쪽 페이퍼 만들기 시작
         List<Vector3> new2vertices = new List<Vector3>();
         new2vertices.Add(endpoint);
@@ -188,7 +188,7 @@ public class Paper : MonoBehaviour
         }
         new2vertices.Add(startpoint);
 
-        makePaper(new2vertices);
+        MakePaper(new2vertices);
 
         //서로 연결
         var tmpPos = gameObject.transform.position;
@@ -200,23 +200,23 @@ public class Paper : MonoBehaviour
         paperList[paperList.Count - 2].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 1].GetComponent<Paper>());
         paperList[paperList.Count - 1].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 2].GetComponent<Paper>());
 
-        for(int i=0; i<attachedPaperList.Count; i++)
+        for (int i = 0; i < attachedPaperList.Count; i++)
         {
-            if(PaperAttached(paperList[paperList.Count -2].GetComponent<Paper>(), attachedPaperList[i]))
+            if (PaperAttached(paperList[paperList.Count - 2].GetComponent<Paper>(), attachedPaperList[i]))
             {
                 paperList[paperList.Count - 2].GetComponent<Paper>().attachedPaperList.Add(attachedPaperList[i]);
             }
 
             if (PaperAttached(paperList[paperList.Count - 1].GetComponent<Paper>(), attachedPaperList[i]))
-            {  
+            {
                 paperList[paperList.Count - 1].GetComponent<Paper>().attachedPaperList.Add(attachedPaperList[i]);
             }
         }
-        for(int i=0; i<paperList.Count-2; i++)
+        for (int i = 0; i < paperList.Count - 2; i++)
         {
             if (paperList[i].GetComponent<Paper>().attachedPaperList.Contains(this))
             {
-                if(PaperAttached(paperList[i].GetComponent<Paper>(), paperList[paperList.Count - 2].GetComponent<Paper>()))
+                if (PaperAttached(paperList[i].GetComponent<Paper>(), paperList[paperList.Count - 2].GetComponent<Paper>()))
                     paperList[i].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 2].GetComponent<Paper>());
                 if (PaperAttached(paperList[i].GetComponent<Paper>(), paperList[paperList.Count - 1].GetComponent<Paper>()))
                     paperList[i].GetComponent<Paper>().attachedPaperList.Add(paperList[paperList.Count - 1].GetComponent<Paper>());
@@ -230,33 +230,33 @@ public class Paper : MonoBehaviour
         return true;
     }
 
-    
+
     /* if pos in paper, return pos */
-    public static Vector3 in_paper(Paper P, Vector3 pos)
+    public static Vector3 InPaper(Paper P, Vector3 pos)
     {
         var globalVertices = P.GetGlobalVertices();
-        var equation = makeEquation.make_plane_equation(new List<Vector3>(){globalVertices[0], globalVertices[1], globalVertices[2]});
+        var equation = makeEquation.make_plane_equation(new List<Vector3>() { globalVertices[0], globalVertices[1], globalVertices[2] });
         pos = new Vector3(pos.x, pos.y, -(equation[0] * pos.x + equation[1] * pos.y + equation[3]) / equation[2]);
         var triangles = P.GetComponent<MeshFilter>().mesh.triangles;
         RaycastHit hit = new RaycastHit(); hit.point = pos;
-        for (int i=0; i<triangles.Length; i += 3)
+        for (int i = 0; i < triangles.Length; i += 3)
         {
-            if(makeEquation.in_triangle(pos, new List<Vector3>() { globalVertices[triangles[i]], globalVertices[triangles[i + 1]], globalVertices[triangles[i + 2]] }))
+            if (makeEquation.in_triangle(pos, new List<Vector3>() { globalVertices[triangles[i]], globalVertices[triangles[i + 1]], globalVertices[triangles[i + 2]] }))
             {
                 return pos;
             }
 
         }
-        return new Vector3(-100,-100,-100);
+        return new Vector3(-100, -100, -100);
     }
 
     /* if pos is close to edge, return pos correct pos attatch to edge */
-    public static Vector3 attatch_to_edge(Paper P, Vector3 pos)
+    public static Vector3 AttatchToEdge(Paper P, Vector3 pos)
     {
         var globalVertices = P.GetGlobalVertices();
         float minDistance = 100;
         int minIndex = -1;
-        for (int i=0; i<globalVertices.Count-1; i++)
+        for (int i = 0; i < globalVertices.Count - 1; i++)
         {
             Vector3 v1;
             Vector3 v2;
@@ -274,17 +274,17 @@ public class Paper : MonoBehaviour
             }
 
             float angle = Vector3.Angle(v1, v2);
-            if (angle>=0 && angle <= 90)
+            if (angle >= 0 && angle <= 90)
             {
-                float distance = v1.magnitude * v2.magnitude * Mathf.Sin(angle*Mathf.Deg2Rad);
-                
-                if(distance < minDistance)
+                float distance = v1.magnitude * v2.magnitude * Mathf.Sin(angle * Mathf.Deg2Rad);
+
+                if (distance < minDistance)
                 {
                     minDistance = distance;
                     minIndex = i;
                 }
             }
-       
+
         }
 
         if (minDistance < 0.1)
@@ -302,7 +302,7 @@ public class Paper : MonoBehaviour
                 v2 = globalVertices[0] - globalVertices[minIndex];
             }
 
-            if(sphereCount == 0)
+            if (sphereCount == 0)
                 return Vector3.Project(v1, v2) + globalVertices[minIndex];
             else
             {
@@ -352,7 +352,7 @@ public class Paper : MonoBehaviour
             yield return new WaitForSeconds(0.01f);
         }
 
-        if(sphereCount ==2)
+        if (sphereCount == 2)
             isDragging = true;
 
         cursorInitialPosition = Input.mousePosition;
@@ -374,7 +374,7 @@ public class Paper : MonoBehaviour
 public class FoldPaper : MonoBehaviour
 {
     // Start is called before the first frame update
-    public static GameObject makeSphere(Vector3 pos, Color color, GameObject parent)
+    public static GameObject MakeSphere(Vector3 pos, Color color, GameObject parent)
     {
         /* Make one sphere with hit and Color */
         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -390,7 +390,7 @@ public class FoldPaper : MonoBehaviour
     }
 
     /* return real position and local position of sphere */
-    public static List<Vector3> spherePosLocal(GameObject gameObjectOfPaper)
+    public static List<Vector3> SpherePosLocal(GameObject gameObjectOfPaper)
     {
         List<Vector3> retList = new List<Vector3>();
         retList.Add(gameObjectOfPaper.transform.Find("Sphere 0").transform.position);
@@ -406,7 +406,7 @@ public class FoldPaper : MonoBehaviour
     }
 
     /* raycast to paper ignore convex */
-    void setSphere()
+    void SetSphere()
     {
         RaycastHit hit;
         Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
@@ -418,13 +418,13 @@ public class FoldPaper : MonoBehaviour
             {
                 GameObject hitGO = hit.collider.gameObject;
                 Paper p = hit.collider.gameObject.GetComponent<Paper>();
-                Vector3 planePos = Paper.in_paper(p, hit.point);
+                Vector3 planePos = Paper.InPaper(p, hit.point);
                 if (planePos != new Vector3(-100, -100, -100))
                 {
-                    Vector3 edgePos = Paper.attatch_to_edge(p, planePos);
+                    Vector3 edgePos = Paper.AttatchToEdge(p, planePos);
                     if (edgePos != new Vector3(-100, -100, -100) && (Paper.usingPaper == p || Paper.sphereCount == 0))
                     {
-                        makeSphere(edgePos, Color.blue, hitGO);
+                        MakeSphere(edgePos, Color.blue, hitGO);
                         Paper.sphereCount++;
                         Paper.usingPaper = p;
                     }
@@ -433,7 +433,7 @@ public class FoldPaper : MonoBehaviour
                 else
                 {
                     hitGO.GetComponent<MeshCollider>().enabled = false;
-                    setSphere();
+                    SetSphere();
                     hitGO.GetComponent<MeshCollider>().enabled = true;
                 }
             }
@@ -451,7 +451,7 @@ public class FoldPaper : MonoBehaviour
     /// </summary>
     /// 
     /* raycast to paper ignore convex */
-    void find_paper()
+    void FindPaper()
     {
         RaycastHit hit;
         Ray ray = GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
@@ -463,7 +463,7 @@ public class FoldPaper : MonoBehaviour
             {
                 GameObject hitGO = hit.collider.gameObject;
                 Paper p = hit.collider.gameObject.GetComponent<Paper>();
-                Vector3 planePos = Paper.in_paper(p, hit.point);
+                Vector3 planePos = Paper.InPaper(p, hit.point);
                 if (planePos != new Vector3(-100, -100, -100))
                 {
 
@@ -481,7 +481,7 @@ public class FoldPaper : MonoBehaviour
                 else
                 {
                     hitGO.GetComponent<MeshCollider>().enabled = false;
-                    find_paper();
+                    FindPaper();
                     hitGO.GetComponent<MeshCollider>().enabled = true;
                 }
             }
@@ -493,12 +493,12 @@ public class FoldPaper : MonoBehaviour
         }
     }
     /* set rotPositions and rotPaper */
-    public void setRot()
+    public void SetRot()
     {
         //If not cut foldpaper yet, start cutting it.
         if (!isCut)
         {
-            var posList = spherePosLocal(Paper.usingPaper.gameObject);
+            var posList = SpherePosLocal(Paper.usingPaper.gameObject);
             rotPos1 = posList[0];
             rotPos2 = posList[1];
             pos1 = posList[2];
@@ -510,8 +510,8 @@ public class FoldPaper : MonoBehaviour
         //If cutting enabled, find paper and start dragging it.
         else
         {
-            find_paper();
-            Paper.setFIxedPaper();
+            FindPaper();
+            Paper.SetFixedPaper();
             if (Paper.usingPaper != null)
             {
                 rotPapers = Paper.Tracking(Paper.fixedPaper, Paper.usingPaper, new HashSet<Paper>());
@@ -525,7 +525,7 @@ public class FoldPaper : MonoBehaviour
         }
     }
     /* rotate paper using screen drag */
-    public void rotatePaper()
+    public void RotatePaper()
     {
         Vector2 campos1 = Camera.allCameras[0].WorldToScreenPoint(pos1);
         Vector2 campos2 = Camera.allCameras[0].WorldToScreenPoint(pos2);
@@ -553,8 +553,8 @@ public class FoldPaper : MonoBehaviour
             new Vector3(0,height,0),
         };
 
-        Paper.makePaper(vertices);
-        
+        Paper.MakePaper(vertices);
+
 
     }
 
@@ -562,33 +562,33 @@ public class FoldPaper : MonoBehaviour
     public static Vector3 pos1;             //local positions
     public static Vector3 pos2;
     public static Vector3 rotPos1;          //real positions
-    public static Vector3 rotPos2;          
+    public static Vector3 rotPos2;
     public static HashSet<Paper> rotPapers; //rotating papers
     void Update()
     {
         //민석
         //If click occurs,
-        
+
         if (Input.GetMouseButtonDown(0))
         {
             //If there's  1 or less sphere, and is not cutting paper yet, try to get another sphere.
             if (Paper.sphereCount < 2)
             {
-                setSphere();
+                SetSphere();
             }
             //If found all,
             if (Paper.sphereCount == 2)
             {
-               setRot();
+                SetRot();
             }
         }
 
         //If user is dragging, rotate it.
         if (Paper.isDragging)
         {
-            rotatePaper();
+            RotatePaper();
         }
     }
 
-   
+
 }
