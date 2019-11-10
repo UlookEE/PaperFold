@@ -550,15 +550,15 @@ public class FoldPaper : MonoBehaviour
 
         foreach (var p in rotPapers)
         {
-            foreach(var q in fixedPapers)
+            foreach (var q in fixedPapers)
             {
                 isCrossed = CrossCheck(p, q, value);
-                if(isCrossed)
+                if (isCrossed)
                 {
                     break;
                 }
             }
-            
+
         }
 
         if (!isCrossed)
@@ -572,21 +572,70 @@ public class FoldPaper : MonoBehaviour
     /* check whether two papers are crossed */
     public bool CrossCheck(Paper rotPaper, Paper fixedPaper, float value)
     {
+
         //Instantiates object.
         GameObject obj = new GameObject();
         obj.transform.SetParent(rotPaper.transform);
         Dot dot = obj.AddComponent<Dot>();
 
         int count = 0;
-        while (count < 50)
+        int executed = 0;
+        while (count < 100)
         {
-            //Sets position of the object.
-            obj.transform.localPosition = new Vector3(Random.Range(0f, 1f), Random.Range(0f, 1f), 0f);
-
-            //If the position of the object is not located to the paper, continue.
-            if (Paper.in_paper(rotPaper, obj.transform.position) == new Vector3(-100, -100, -100))
+            //exception handling: if executed number exceeds 10000, throws an error.
+            executed++;
+            if (executed > 10000)
             {
-                continue;
+                throw new System.Exception("Executed over 10,000 times at count " + count + ". Preventing infinite loop...");
+            }
+
+            //Sets position of the object.
+            switch (count)
+            {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                    {
+                        Vector3 pos = rotPaper.vertices[count];
+                        Vector3 small = pos - rotPaper.vertices[rotPaper.vertices.Count - 1];
+                        small *= 1.01f;
+                        obj.transform.localPosition = small + rotPaper.vertices[rotPaper.vertices.Count - 1];
+                        //GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        //temp.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
+                        //temp.transform.position = obj.transform.position;
+                    }
+                    break;
+            }
+
+            switch (count % 10)
+            {
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                    {
+                        Vector3 pos = Vector3.Lerp(rotPaper.vertices[count % 4], rotPaper.vertices[(count + 1) % 4], Random.Range(0f, 1f));
+                        Vector3 small = pos - rotPaper.vertices[rotPaper.vertices.Count - 1];
+                        small *= 1.01f;
+                        obj.transform.localPosition = small + rotPaper.vertices[rotPaper.vertices.Count - 1];
+                        //if (Random.Range(0, 4) == 0)
+                        //{
+                        //    GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        //    temp.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
+                        //    temp.transform.position = obj.transform.position;
+                        //}
+                    }
+                    break;
+            }
+
+            {
+                obj.transform.localPosition = new Vector3(Random.Range(0f, 1f), Random.Range(0f, 1f), 0f);
+                //If the position of the object is not located to the paper, continue.
+                if (Paper.in_paper(rotPaper, obj.transform.position) == new Vector3(-100, -100, -100))
+                {
+                    continue;
+                }
             }
 
             //Else, Assigns world position to dot instance.
@@ -605,6 +654,7 @@ public class FoldPaper : MonoBehaviour
         Destroy(obj);
         return false;
     }
+
     void Start()
     {
         int width = 1, height = 1;

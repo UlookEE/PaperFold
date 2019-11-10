@@ -15,23 +15,32 @@ public class Dot : MonoBehaviour
     /// <returns></returns>
     public bool IsCrossed(Paper rotPaper, Paper fixedPaper, float value)
     {
+        List<float> equation;
+        Vector3 normalPaper;
+        float distance;
         //Calculates prev value of the plane equation.
-        List<float> equation = makeEquation.make_plane_equation(fixedPaper.GetGlobalVertices());    //This is world coordinates.
-        Vector3 normalPaper = new Vector3(equation[0], equation[1], equation[2]);
+        equation = makeEquation.make_plane_equation(fixedPaper.GetGlobalVertices());    //This is world coordinates.
+        normalPaper = new Vector3(equation[0], equation[1], equation[2]);
         //Debug.Log(normalPaper.x + " " + normalPaper.y + " " + normalPaper.z);
 
-        float beforeFloatRAW = Vector3.Dot(normalPaper, pos);
+        distance = makeEquation.DotToPlaneDistance(equation, pos);
+
+        float beforeFloatRAW = distance;
         float beforeFloat = beforeFloatRAW / Mathf.Abs(beforeFloatRAW);
         int before = Mathf.RoundToInt(beforeFloat);
 
         //Instantiates temporary object.
         GameObject obj = new GameObject();
-        obj.transform.SetParent(rotPaper.transform);
+        //  obj.transform.SetParent(rotPaper.transform);
         obj.transform.position = pos;
-        obj.transform.RotateAround(FoldPaper.rotPos2, FoldPaper.rotPos2 - FoldPaper.rotPos1, value * 1.1f);
+        obj.transform.RotateAround(FoldPaper.rotPos2, FoldPaper.rotPos2 - FoldPaper.rotPos1, value);
 
         //Calculates next value of the plane equation.
-        float afterFloatRAW = Vector3.Dot(normalPaper, obj.transform.position);
+        distance = makeEquation.DotToPlaneDistance(equation, obj.transform.position);
+
+        Vector3 afterPos = obj.transform.position;
+
+        float afterFloatRAW = distance;
         float afterFloat = afterFloatRAW / Mathf.Abs(afterFloatRAW);
         int after = Mathf.RoundToInt(afterFloat);
 
@@ -42,17 +51,18 @@ public class Dot : MonoBehaviour
 
         Destroy(obj);
 
-        if(Paper.in_paper(fixedPaper, pointAtPaper_Global) == new Vector3(-100, -100, -100)) return false;
-
-        //Result would be true if before and after are different.
-        //Which means, after it moved, the dot crossed over the plane.
-
-        if (Mathf.Abs(beforeFloatRAW) < 0.01f)
+        if (Paper.in_paper(fixedPaper, pointAtPaper_Global) == new Vector3(-100, -100, -100))
         {
-            Debug.Log("CROSSED! BEFORE: " + beforeFloatRAW + " AFTER: " + afterFloatRAW);
-            GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            temp.transform.position = pointAtPaper_Global;
-            temp.transform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
+            return false;
+        }
+
+        //Debug.Log("CROSSED! BEFORE: " + Mathf.Asin(beforeFloatRAW) * 180 / Mathf.PI + " AFTER: " + Mathf.Asin(afterFloatRAW) * 180 / Mathf.PI);
+
+        //This is for debug.
+        //Draws before-after line.
+        if (before * after == -1)
+        {
+            //Debug.Log("CROSSED! BEFORE: " + Mathf.Asin(beforeFloatRAW) * 180 / Mathf.PI + " AFTER: " + Mathf.Asin(afterFloatRAW) * 180 / Mathf.PI);
 
             GameObject tempbef = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             tempbef.transform.position = pos;
@@ -61,15 +71,15 @@ public class Dot : MonoBehaviour
             GameObject line = new GameObject();
             LineRenderer ren = line.AddComponent<LineRenderer>();
             ren.SetPositions(new Vector3[] {
-                pos, pointAtPaper_Global
+                pos, afterPos
             });
-
-            float dist = Vector3.Distance(pos, pointAtPaper_Global);
-
-            ren.startWidth = 0.001f / dist;
-            ren.endWidth = 0.001f / dist;
+            ren.startWidth = 0.001f;
+            ren.endWidth = 0.001f;
         }
 
-        return before * after == -1; 
+        //Result would be true if before and after are different.
+        //Which means, after it moved, the dot crossed over the plane.
+
+        return before * after == -1;
     }
 }

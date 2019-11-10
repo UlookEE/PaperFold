@@ -49,6 +49,13 @@ public class makeEquation : MonoBehaviour
         return (A * vertex.x + B * vertex.y + C * vertex.z + D) == 0;
     }
 
+    public static float DotToPlaneDistance(List<float> equation, Vector3 vertex)
+    {
+        float A = equation[0]; float B = equation[1]; float C = equation[2]; float D = equation[3];
+        //Debug.Log("Is It On The Plane? :  " + ((A * vertex.x + B * vertex.y + C * vertex.z + D) == 0));
+        return (A * vertex.x + B * vertex.y + C * vertex.z + D);
+    }
+
     public static float in_line(List<float> equation, Vector2 vertex)
     {
         float A = equation[0]; float B = equation[1]; float C = equation[2];
