@@ -7,8 +7,6 @@ using UnityEngine;
 /// </summary>
 public class Dot : MonoBehaviour
 {
-    public static float deltaRadian = Mathf.PI / 36;    //Amount of rotation of next dot position.
-
     public Vector3 pos;                                 //Current position of the dot in world position.
 
     /// <summary>
@@ -18,21 +16,23 @@ public class Dot : MonoBehaviour
     public bool IsCrossed(Paper rotPaper, Paper fixedPaper, float value)
     {
         //Calculates prev value of the plane equation.
-        List<float> equation = makeEquation.make_plane_equation(fixedPaper.vertices);    //This is local coordinates.
-        Vector3 normalPaper = Paper.usingPaper.transform.TransformVector(new Vector3(equation[0], equation[1], equation[2]));   //This is world coordinates.
-        float beforeFloat = Vector3.Dot(normalPaper, pos);
-        beforeFloat /= Mathf.Abs(beforeFloat);
+        List<float> equation = makeEquation.make_plane_equation(fixedPaper.GetGlobalVertices());    //This is world coordinates.
+        Vector3 normalPaper = new Vector3(equation[0], equation[1], equation[2]);
+        //Debug.Log(normalPaper.x + " " + normalPaper.y + " " + normalPaper.z);
+
+        float beforeFloatRAW = Vector3.Dot(normalPaper, pos);
+        float beforeFloat = beforeFloatRAW / Mathf.Abs(beforeFloatRAW);
         int before = Mathf.RoundToInt(beforeFloat);
 
         //Instantiates temporary object.
         GameObject obj = new GameObject();
         obj.transform.SetParent(rotPaper.transform);
         obj.transform.position = pos;
-        obj.transform.RotateAround(FoldPaper.rotPos2, FoldPaper.rotPos2 - FoldPaper.rotPos1, value * 1f);
+        obj.transform.RotateAround(FoldPaper.rotPos2, FoldPaper.rotPos2 - FoldPaper.rotPos1, value * 1.1f);
 
         //Calculates next value of the plane equation.
-        float afterFloat = Vector3.Dot(normalPaper, obj.transform.position);
-        afterFloat /= Mathf.Abs(afterFloat);
+        float afterFloatRAW = Vector3.Dot(normalPaper, obj.transform.position);
+        float afterFloat = afterFloatRAW / Mathf.Abs(afterFloatRAW);
         int after = Mathf.RoundToInt(afterFloat);
 
         //Make a line equation, from before dot to after dot.
@@ -46,38 +46,30 @@ public class Dot : MonoBehaviour
 
         //Result would be true if before and after are different.
         //Which means, after it moved, the dot crossed over the plane.
+
+        if (Mathf.Abs(beforeFloatRAW) < 0.01f)
+        {
+            Debug.Log("CROSSED! BEFORE: " + beforeFloatRAW + " AFTER: " + afterFloatRAW);
+            GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            temp.transform.position = pointAtPaper_Global;
+            temp.transform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
+
+            GameObject tempbef = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            tempbef.transform.position = pos;
+            tempbef.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+
+            GameObject line = new GameObject();
+            LineRenderer ren = line.AddComponent<LineRenderer>();
+            ren.SetPositions(new Vector3[] {
+                pos, pointAtPaper_Global
+            });
+
+            float dist = Vector3.Distance(pos, pointAtPaper_Global);
+
+            ren.startWidth = 0.001f / dist;
+            ren.endWidth = 0.001f / dist;
+        }
+
         return before * after == -1; 
     }
-
-    // NOTE:: This is for calculation without monobehaviour.
-
-    ///// <summary>
-    ///// Determines whether a dot crossed over a paper.
-    ///// </summary>
-    ///// <returns></returns>
-    //public bool IsCrossed()
-    //{
-    //    Vector3 origin = FoldPaper.rotPos1;                             //Origin of coordinate.
-    //    Vector3 direction = FoldPaper.rotPos2 - FoldPaper.rotPos1;      //Direction vector of axis.
-    //    Vector3 operand = pos - origin;                                 //Operand vector.
-
-    //    //1. Calculate foot of perpendicular(FOP) from dot to direction vector. (수선의 발)
-
-    //    //Get a cosine between direction vector and operand vector.
-    //    float cosine = Vector3.Dot(direction, operand) / (direction.magnitude * operand.magnitude);
-
-    //    //Get a magnitude of FOP.
-    //    float magnitude = operand.magnitude * cosine;
-
-    //    //Get a FOP.
-    //    Vector3 fop = direction.normalized * magnitude + origin;
-
-    //    //2. Calculate a temporary rotated dot.
-
-    //    //Get a local position of next dot position.
-    //    Vector3 nextPosLocal = new Vector3((pos - fop).magnitude * Mathf.Cos(deltaRadian), Mathf.Sin(deltaRadian));
-
-    //    Vector3 nextPos;                                        //Prediction of next position.
-
-    //}
 }

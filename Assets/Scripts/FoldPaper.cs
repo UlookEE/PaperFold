@@ -553,6 +553,10 @@ public class FoldPaper : MonoBehaviour
             foreach(var q in fixedPapers)
             {
                 isCrossed = CrossCheck(p, q, value);
+                if(isCrossed)
+                {
+                    break;
+                }
             }
             
         }
@@ -571,11 +575,10 @@ public class FoldPaper : MonoBehaviour
         //Instantiates object.
         GameObject obj = new GameObject();
         obj.transform.SetParent(rotPaper.transform);
-        obj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
         Dot dot = obj.AddComponent<Dot>();
 
         int count = 0;
-        while (count < 100)
+        while (count < 50)
         {
             //Sets position of the object.
             obj.transform.localPosition = new Vector3(Random.Range(0f, 1f), Random.Range(0f, 1f), 0f);
