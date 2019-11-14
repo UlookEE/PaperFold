@@ -31,6 +31,7 @@ public class Paper : MonoBehaviour
         {
             centermess += vertices[i];
         }
+
         centermess /= vertices.Count;   // CoG vertex
         vertices.Add(centermess);
         this.vertices = vertices;
@@ -148,13 +149,13 @@ public class Paper : MonoBehaviour
         {
             if (Vector2.Distance(vertices[i], startpoint)
                 + Vector2.Distance(vertices[(i + 1) % (vertices.Count - 1)], startpoint)
-                - Vector2.Distance(vertices[i], vertices[(i + 1) % (vertices.Count - 1)]) <= 0.00001f)
+                - Vector2.Distance(vertices[i], vertices[(i + 1) % (vertices.Count - 1)]) <= 0.001f)
             {
                 startindex = i;
             }
             if (Vector2.Distance(vertices[i], endpoint)
                 + Vector2.Distance(vertices[(i + 1) % (vertices.Count - 1)], endpoint)
-                - Vector2.Distance(vertices[i], vertices[(i + 1) % (vertices.Count - 1)]) <= 0.00001f)
+                - Vector2.Distance(vertices[i], vertices[(i + 1) % (vertices.Count - 1)]) <= 0.001f)
             {
                 endindex = i;
             }
@@ -405,6 +406,31 @@ public class FoldPaper : MonoBehaviour
         return retList;
     }
 
+    public bool CheckSphereOnSharedEdge(Vector3 pos) // pos : the position sphere will be placed 
+    {
+        int checkCount = 0; // checkcout ... vertex in edge
+        foreach (var p in Paper.paperList) // Compare with all edge... optimization will need
+        {
+            Paper paper = p.GetComponent<Paper>();
+            var vList = paper.GetGlobalVertices();
+            vList.RemoveAt(vList.Count - 1); // Remove CoG
+            for(int i = 0; i<vList.Count; i++)
+            {
+                var v1 = vList[i];                     // Edge vertex 1
+                var v2 = vList[(i + 1) % vList.Count]; // Edge vertex 2
+                float eLen = Vector3.Distance(v1, v2); // Edge length
+                if (Vector3.Distance(v1,pos) + Vector3.Distance(v2, pos) - eLen < 0.0001f)    // pos is in Edge
+                {
+                    Debug.Log("Equal");
+                    checkCount++;
+                    if(checkCount == 2)                                                       // pos is in two edge...
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /* raycast to paper ignore convex */
     void SetSphere()
     {
@@ -424,9 +450,12 @@ public class FoldPaper : MonoBehaviour
                     Vector3 edgePos = Paper.AttatchToEdge(p, planePos);
                     if (edgePos != new Vector3(-100, -100, -100) && (Paper.usingPaper == p || Paper.sphereCount == 0))
                     {
-                        MakeSphere(edgePos, Color.blue, hitGO);
-                        Paper.sphereCount++;
-                        Paper.usingPaper = p;
+                        if (!CheckSphereOnSharedEdge(edgePos))  // Check edgePos and sphere 0's pos is in same edge
+                        {
+                            MakeSphere(edgePos, Color.blue, hitGO);
+                            Paper.sphereCount++;
+                            Paper.usingPaper = p;
+                        }
                     }
                     return;
                 }

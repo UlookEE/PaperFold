@@ -18,7 +18,7 @@ public class FoldButton : MonoBehaviour
             
             if (start == false)
             {
-                var posList = FoldPaper.spherePosLocal(Paper.usingPaper.gameObject);
+                var posList = FoldPaper.SpherePosLocal(Paper.usingPaper.gameObject);
                 rotPos1 = posList[0];
                 rotPos2 = posList[1];
                 pos1 = posList[2];
