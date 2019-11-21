@@ -73,18 +73,6 @@ public class Paper : MonoBehaviour
         paperList.Add(tmp);
     }
 
-    /* set fixedPaper : fixedPaper is not rotate */
-    public static void SetFixedPaper()
-    {
-        if (usingPaper == paperList[paperList.Count - 1].GetComponent<Paper>())
-        {
-            fixedPaper = paperList[paperList.Count - 2].GetComponent<Paper>();
-        }
-        else
-        {
-            fixedPaper = paperList[paperList.Count - 1].GetComponent<Paper>();
-        }
-    }
 
     /* return list of vertex converted position local to global */
     public List<Vector3> GetGlobalVertices()
@@ -130,7 +118,7 @@ public class Paper : MonoBehaviour
         {
             if (dynamic.attachedPaperList[i] != fix && !trackgroup.Contains(dynamic.attachedPaperList[i]))
             {
-                Debug.Log("attachedPaperList find : " + dynamic.attachedPaperList[i].gameObject.name);
+                //Debug.Log("attachedPaperList find : " + dynamic.attachedPaperList[i].gameObject.name);
                 Tracking(fix, dynamic.attachedPaperList[i], trackgroup);
             }
         }
@@ -421,7 +409,7 @@ public class FoldPaper : MonoBehaviour
                 float eLen = Vector3.Distance(v1, v2); // Edge length
                 if (Vector3.Distance(v1,pos) + Vector3.Distance(v2, pos) - eLen < 0.0001f)    // pos is in Edge
                 {
-                    Debug.Log("Equal");
+                    //Debug.Log("Equal");
                     checkCount++;
                     if(checkCount == 2)                                                       // pos is in two edge...
                         return true;
@@ -475,6 +463,26 @@ public class FoldPaper : MonoBehaviour
     }
 
 
+    Paper FindUsingPaper(Paper p)
+    {
+        Queue<Paper> BFSQueue = new Queue<Paper>();
+        BFSQueue.Enqueue(p);
+        while(BFSQueue.Count != 0)
+        {
+            var paper = BFSQueue.Dequeue();
+            if (paper.gameObject == Paper.paperList[Paper.paperList.Count - 1])
+                return Paper.paperList[Paper.paperList.Count - 1].GetComponent<Paper>();
+
+            if (paper.gameObject == Paper.paperList[Paper.paperList.Count - 2])
+                return Paper.paperList[Paper.paperList.Count - 2].GetComponent<Paper>();
+            for (int i=0; i<paper.attachedPaperList.Count; i++)
+            {
+                BFSQueue.Enqueue(paper.attachedPaperList[i]);
+            }
+        }
+        Debug.Log("Bug: FindUsingPaper failed!");
+        return null;
+    }
     /// <summary>
     /// Sets usingpaper to a paper hit by raycast.
     /// </summary>
@@ -495,8 +503,7 @@ public class FoldPaper : MonoBehaviour
                 Vector3 planePos = Paper.InPaper(p, hit.point);
                 if (planePos != new Vector3(-100, -100, -100))
                 {
-
-                    Paper.usingPaper = p;
+                    Paper.usingPaper = FindUsingPaper(p);
                     if (Paper.paperList[Paper.paperList.Count - 1].name == p.gameObject.name)
                     {
                         Paper.fixedPaper = Paper.paperList[Paper.paperList.Count - 2].GetComponent<Paper>();
@@ -540,7 +547,6 @@ public class FoldPaper : MonoBehaviour
         else
         {
             FindPaper();
-            Paper.SetFixedPaper();
             if (Paper.usingPaper != null)
             {
                 rotPapers = Paper.Tracking(Paper.fixedPaper, Paper.usingPaper, new HashSet<Paper>());
@@ -549,7 +555,7 @@ public class FoldPaper : MonoBehaviour
                 {
                     rotPaperstr += p.gameObject.name + " ";
                 }
-                Debug.Log("rotpapers : " + rotPaperstr);
+                //Debug.Log("rotpapers : " + rotPaperstr);
             }
         }
     }
@@ -615,6 +621,7 @@ public class FoldPaper : MonoBehaviour
         //If user is dragging, rotate it.
         if (Paper.isDragging)
         {
+            Debug.Log("Fixed : " + Paper.fixedPaper.name + " Using : " + Paper.usingPaper.name);
             RotatePaper();
         }
     }
