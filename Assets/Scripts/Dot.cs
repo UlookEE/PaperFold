@@ -64,9 +64,9 @@ public class Dot : MonoBehaviour
         {
             //Debug.Log("CROSSED! BEFORE: " + Mathf.Asin(beforeFloatRAW) * 180 / Mathf.PI + " AFTER: " + Mathf.Asin(afterFloatRAW) * 180 / Mathf.PI);
 
-            GameObject tempbef = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            tempbef.transform.position = pos;
-            tempbef.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+        //    GameObject tempbef = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        //    tempbef.transform.position = pos;
+        //    tempbef.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
             GameObject line = new GameObject();
             LineRenderer ren = line.AddComponent<LineRenderer>();
