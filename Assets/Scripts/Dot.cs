@@ -33,7 +33,7 @@ public class Dot : MonoBehaviour
         GameObject obj = new GameObject();
         //  obj.transform.SetParent(rotPaper.transform);
         obj.transform.position = pos;
-        obj.transform.RotateAround(FoldPaper.rotPos2, FoldPaper.rotPos2 - FoldPaper.rotPos1, value);
+        obj.transform.RotateAround(FoldPaper.rotPos2, FoldPaper.rotPos2 - FoldPaper.rotPos1, value < 4 ? 5 : value * 2);
 
         //Calculates next value of the plane equation.
         distance = makeEquation.DotToPlaneDistance(equation, obj.transform.position);
@@ -60,22 +60,22 @@ public class Dot : MonoBehaviour
 
         //This is for debug.
         //Draws before-after line.
-        if (before * after == -1)
-        {
-            //Debug.Log("CROSSED! BEFORE: " + Mathf.Asin(beforeFloatRAW) * 180 / Mathf.PI + " AFTER: " + Mathf.Asin(afterFloatRAW) * 180 / Mathf.PI);
+        //if (before * after == -1)
+        //{
+        //    //Debug.Log("CROSSED! BEFORE: " + Mathf.Asin(beforeFloatRAW) * 180 / Mathf.PI + " AFTER: " + Mathf.Asin(afterFloatRAW) * 180 / Mathf.PI);
 
-        //    GameObject tempbef = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        //    tempbef.transform.position = pos;
-        //    tempbef.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+        ////    GameObject tempbef = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        ////    tempbef.transform.position = pos;
+        ////    tempbef.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
-            GameObject line = new GameObject();
-            LineRenderer ren = line.AddComponent<LineRenderer>();
-            ren.SetPositions(new Vector3[] {
-                pos, afterPos
-            });
-            ren.startWidth = 0.001f;
-            ren.endWidth = 0.001f;
-        }
+        //    GameObject line = new GameObject();
+        //    LineRenderer ren = line.AddComponent<LineRenderer>();
+        //    ren.SetPositions(new Vector3[] {
+        //        pos, afterPos
+        //    });
+        //    ren.startWidth = 0.001f;
+        //    ren.endWidth = 0.001f;
+        //}
 
         //Result would be true if before and after are different.
         //Which means, after it moved, the dot crossed over the plane.

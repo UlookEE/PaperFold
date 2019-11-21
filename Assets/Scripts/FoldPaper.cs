@@ -601,9 +601,9 @@ public class FoldPaper : MonoBehaviour
                         Vector3 small = pos - rotPaper.vertices[rotPaper.vertices.Count - 1];
                         small *= 1.01f;
                         obj.transform.localPosition = small + rotPaper.vertices[rotPaper.vertices.Count - 1];
-                        //GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                        //temp.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
-                        //temp.transform.position = obj.transform.position;
+                        GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        temp.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
+                        temp.transform.position = obj.transform.position;
                     }
                     break;
             }
@@ -646,12 +646,12 @@ public class FoldPaper : MonoBehaviour
             //Check whether it's crossed.
             if (dot.IsCrossed(rotPaper, fixedPaper, value))
             {
-                Destroy(obj);
+                //Paper.isDragging = false;
                 return true;
             }
-        }
 
-        Destroy(obj);
+            Destroy(obj);
+        }
         return false;
     }
 
