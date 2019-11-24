@@ -575,18 +575,23 @@ public class FoldPaper : MonoBehaviour
         {
             p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
         }
-        bool rollBackFlag = false;
-        for (int i = 0; i < Paper.paperList.Count && !rollBackFlag; i++)
+
+        bool rollBackFlag = true;
+        while (rollBackFlag)
         {
-            for (int j = i + 1; j < Paper.paperList.Count && !rollBackFlag; j++)
+            rollBackFlag = false;
+            for (int i = 0; i < Paper.paperList.Count && !rollBackFlag; i++)
             {
-                if (PaperCrossed(Paper.paperList[i].GetComponent<Paper>(), Paper.paperList[j].GetComponent<Paper>()))
+                for (int j = i + 1; j < Paper.paperList.Count && !rollBackFlag; j++)
                 {
-                    rollBackFlag = true;
-                    Debug.Log("PaperCrossed : True");
-                    foreach (var p in rotPapers)
+                    if (PaperCrossed(Paper.paperList[i].GetComponent<Paper>(), Paper.paperList[j].GetComponent<Paper>()))
                     {
-                        p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, -value * 1.5f);
+                        rollBackFlag = true;
+                        Debug.Log("PaperCrossed : True");
+                        foreach (var p in rotPapers)
+                        {
+                            p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, -value * 1.5f);
+                        }
                     }
                 }
             }
