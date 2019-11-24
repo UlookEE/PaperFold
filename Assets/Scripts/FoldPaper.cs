@@ -586,7 +586,7 @@ public class FoldPaper : MonoBehaviour
                     Debug.Log("PaperCrossed : True");
                     foreach (var p in rotPapers)
                     {
-                        p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, -value*3);
+                        p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, -value * 1.5f);
                     }
                 }
             }
@@ -604,7 +604,21 @@ public class FoldPaper : MonoBehaviour
         var p1Plane = makeEquation.make_plane_equation(p1Vertices);
         var p2Plane = makeEquation.make_plane_equation(p2Vertices);
 
-        for (int i = 0; i < p1Vertices.Count; i++)  // Check p1 edge is crossed to p2 plane
+        // Check whether p1 and p2 has same plane equation.
+
+        Vector3 p1v = new Vector3(p1Plane[0], p1Plane[1], p1Plane[2]);
+        Vector3 p2v = new Vector3(p2Plane[0], p2Plane[1], p2Plane[2]);
+
+        float theta = Mathf.Acos(Vector3.Dot(p1v, p2v) / (p1v.magnitude * p2v.magnitude));  // Angle between p1 and p2 normal vector (by radian).
+
+        if (Mathf.PI * (1 - 0.005f) < theta && Mathf.Abs(p1Plane[3] - p2Plane[3]) < 0.05f)
+        {
+            Debug.Log("P1 and P2 has same plane equation.");
+
+            return true;
+        }
+
+        for (int i = 0; i < p1Vertices.Count - 1; i++)  // Check p1 edge is crossed to p2 plane
         {
             var v1 = p1Vertices[i];
             var v2 = p1Vertices[(i + 1) % p1Vertices.Count];
@@ -623,7 +637,6 @@ public class FoldPaper : MonoBehaviour
                 }
                 return true;
             }
-
         }
 
         for (int i = 0; i < p2Vertices.Count; i++)  // Check p1 edge is crossed to p2 plane
