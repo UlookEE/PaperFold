@@ -586,7 +586,7 @@ public class FoldPaper : MonoBehaviour
                     Debug.Log("PaperCrossed : True");
                     foreach (var p in rotPapers)
                     {
-                        p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, -value);
+                        p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, -value*3);
                     }
                 }
             }
@@ -604,7 +604,7 @@ public class FoldPaper : MonoBehaviour
         var p1Plane = makeEquation.make_plane_equation(p1Vertices);
         var p2Plane = makeEquation.make_plane_equation(p2Vertices);
 
-        for (int i = 0; i < p1Vertices.Count - 1; i++)  // Check p1 edge is crossed to p2 plane
+        for (int i = 0; i < p1Vertices.Count; i++)  // Check p1 edge is crossed to p2 plane
         {
             var v1 = p1Vertices[i];
             var v2 = p1Vertices[(i + 1) % p1Vertices.Count];
@@ -626,7 +626,7 @@ public class FoldPaper : MonoBehaviour
 
         }
 
-        for (int i = 0; i < p2Vertices.Count - 1; i++)  // Check p1 edge is crossed to p2 plane
+        for (int i = 0; i < p2Vertices.Count; i++)  // Check p1 edge is crossed to p2 plane
         {
             var v1 = p2Vertices[i];
             var v2 = p2Vertices[(i + 1) % p2Vertices.Count];
