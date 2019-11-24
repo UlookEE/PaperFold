@@ -610,13 +610,10 @@ public class FoldPaper : MonoBehaviour
             var v2 = p1Vertices[(i + 1) % p1Vertices.Count];
             var diff = v2 - v1;
             var devideingVal = -(p2Plane[0] * diff[0] + p2Plane[1] * diff[1] + p2Plane[2] * diff[2]);
-            Debug.Log(devideingVal);
-
-
 
             var u = (p2Plane[0] * v1[0] + p2Plane[1] * v1[1] + p2Plane[2] * v1[2] + p2Plane[3]) / devideingVal; // Plane var res of v1
             var crossPos = v1 + u * diff;
-            if (Paper.InPaper(p2, crossPos) != new Vector3(-100, -100, -100))
+            if (Paper.InPaper(p2, crossPos) != new Vector3(-100, -100, -100) && Paper.InPaper(p1, crossPos) != new Vector3(-100, -100, -100))
             {
                 var v1Local = p1.vertices[i];
                 var v2Local = p1.vertices[(i + 1) % p1Vertices.Count];
@@ -635,11 +632,10 @@ public class FoldPaper : MonoBehaviour
             var v2 = p2Vertices[(i + 1) % p2Vertices.Count];
             var diff = v2 - v1;
             var devideingVal = -(p1Plane[0] * diff[0] + p1Plane[1] * diff[1] + p1Plane[2] * diff[2]);
-            Debug.Log(devideingVal);
             var u = (p1Plane[0] * v1[0] + p1Plane[1] * v1[1] + p1Plane[2] * v1[2] + p1Plane[3]) / devideingVal; // Plane var res of v1
             var crossPos = v1 + u * diff;
 
-            if (Paper.InPaper(p1, crossPos) != new Vector3(-100, -100, -100))
+            if (Paper.InPaper(p2, crossPos) != new Vector3(-100, -100, -100) && Paper.InPaper(p1, crossPos) != new Vector3(-100, -100, -100))
             {
                 var v1Local = p2.vertices[i];
                 var v2Local = p2.vertices[(i + 1) % p2Vertices.Count];
