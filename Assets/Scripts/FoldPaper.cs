@@ -616,7 +616,9 @@ public class FoldPaper : MonoBehaviour
 
         float theta = Mathf.Acos(Vector3.Dot(p1v, p2v) / (p1v.magnitude * p2v.magnitude));  // Angle between p1 and p2 normal vector (by radian).
 
-        if (Mathf.PI * (1 - 0.005f) < theta && Mathf.Abs(p1Plane[3] - p2Plane[3]) < 0.05f)
+        Debug.Log(theta + " " + Mathf.Abs(p1Plane[3] - p2v.x / p1v.x * p2Plane[3]));
+
+        if (Mathf.PI * (1 - 0.005f) < theta && Mathf.Abs(p1Plane[3] - p2v.x / p1v.x * p2Plane[3]) < 0.5f)
         {
             Debug.Log("P1 and P2 has same plane equation.");
 
