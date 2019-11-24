@@ -46,7 +46,7 @@ public class makeEquation : MonoBehaviour
     {
         float A = equation[0]; float B = equation[1]; float C = equation[2]; float D = equation[3];
         //Debug.Log("Is It On The Plane? :  " + ((A * vertex.x + B * vertex.y + C * vertex.z + D) == 0));
-        return (A * vertex.x + B * vertex.y + C * vertex.z + D) == 0;
+        return (A * vertex.x + B * vertex.y + C * vertex.z + D) < 0.001f;
     }
 
     public static float in_line(List<float> equation, Vector2 vertex)
@@ -89,7 +89,7 @@ public class makeEquation : MonoBehaviour
         var line2 = make_line_equation(new Vector2[] { vertices2D[1], vertices2D[2] });
         var line3 = make_line_equation(new Vector2[] { vertices2D[2], vertices2D[0] });
 
-       
+
         if (in_line(line1, vertices2D[2]) * in_line(line1, new Vector2(dot.x, dot.y)) >= 0 &&
             in_line(line2, vertices2D[0]) * in_line(line2, new Vector2(dot.x, dot.y)) >= 0 &&
             in_line(line3, vertices2D[1]) * in_line(line3, new Vector2(dot.x, dot.y)) >= 0)
@@ -220,6 +220,16 @@ public class makeEquation : MonoBehaviour
         return Vector3.Cross(d, p) == Vector3.zero;
     }
 
+    // Make line equation to vector
+    public static List<Vector3> VecLineEquation(Vector3 v1, Vector3 v2)
+    {
+        var equation = new List<Vector3>();
+        equation.Add(v1);
+        equation.Add(v2 - v1);
+        return equation;
+    }
+
+   
     void Start()
     {
 

@@ -402,16 +402,16 @@ public class FoldPaper : MonoBehaviour
             Paper paper = p.GetComponent<Paper>();
             var vList = paper.GetGlobalVertices();
             vList.RemoveAt(vList.Count - 1); // Remove CoG
-            for(int i = 0; i<vList.Count; i++)
+            for (int i = 0; i < vList.Count; i++)
             {
                 var v1 = vList[i];                     // Edge vertex 1
                 var v2 = vList[(i + 1) % vList.Count]; // Edge vertex 2
                 float eLen = Vector3.Distance(v1, v2); // Edge length
-                if (Vector3.Distance(v1,pos) + Vector3.Distance(v2, pos) - eLen < 0.0001f)    // pos is in Edge
+                if (Vector3.Distance(v1, pos) + Vector3.Distance(v2, pos) - eLen < 0.0001f)    // pos is in Edge
                 {
                     //Debug.Log("Equal");
                     checkCount++;
-                    if(checkCount == 2)                                                       // pos is in two edge...
+                    if (checkCount == 2)                                                       // pos is in two edge...
                         return true;
                 }
             }
@@ -467,7 +467,7 @@ public class FoldPaper : MonoBehaviour
     {
         Queue<Paper> BFSQueue = new Queue<Paper>();
         BFSQueue.Enqueue(p);
-        while(BFSQueue.Count != 0)
+        while (BFSQueue.Count != 0)
         {
             var paper = BFSQueue.Dequeue();
             if (paper.gameObject == Paper.paperList[Paper.paperList.Count - 1])
@@ -475,7 +475,7 @@ public class FoldPaper : MonoBehaviour
 
             if (paper.gameObject == Paper.paperList[Paper.paperList.Count - 2])
                 return Paper.paperList[Paper.paperList.Count - 2].GetComponent<Paper>();
-            for (int i=0; i<paper.attachedPaperList.Count; i++)
+            for (int i = 0; i < paper.attachedPaperList.Count; i++)
             {
                 BFSQueue.Enqueue(paper.attachedPaperList[i]);
             }
@@ -567,7 +567,7 @@ public class FoldPaper : MonoBehaviour
         float angle = Mathf.Acos(Vector2.Dot(Paper.cursorDeltaPosition, campos2 - campos1) / (((Vector2)Paper.cursorDeltaPosition).magnitude * (campos2 - campos1).magnitude));
         float direction = Mathf.Sign(Vector3.Cross(Paper.cursorDeltaPosition, campos2 - campos1).z);
         float cosine = direction * Mathf.Abs(Mathf.Sin(angle));
-        float value = Paper.cursorDeltaPosition.magnitude * cosine / 66;
+        float value = 1 * direction;
         if (double.IsNaN(value))
             value = 0;
 
@@ -575,6 +575,82 @@ public class FoldPaper : MonoBehaviour
         {
             p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
         }
+        bool rollBackFlag = false;
+        for (int i = 0; i < Paper.paperList.Count && !rollBackFlag; i++)
+        {
+            for (int j = i + 1; j < Paper.paperList.Count && !rollBackFlag; j++)
+            {
+                if (PaperCrossed(Paper.paperList[i].GetComponent<Paper>(), Paper.paperList[j].GetComponent<Paper>()))
+                {
+                    rollBackFlag = true;
+                    Debug.Log("PaperCrossed : True");
+                    foreach (var p in rotPapers)
+                    {
+                        p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, -value);
+                    }
+                }
+            }
+        }
+    }
+
+    // Return p1, p2 is Crossed
+    public static bool PaperCrossed(Paper p1, Paper p2)
+    {
+        var p1Vertices = p1.GetGlobalVertices();
+        p1Vertices.RemoveAt(p1Vertices.Count - 1); // Remove CoG
+        var p2Vertices = p2.GetGlobalVertices();
+        p2Vertices.RemoveAt(p2Vertices.Count - 1);
+
+        var p1Plane = makeEquation.make_plane_equation(p1Vertices);
+        var p2Plane = makeEquation.make_plane_equation(p2Vertices);
+
+        for (int i = 0; i < p1Vertices.Count - 1; i++)  // Check p1 edge is crossed to p2 plane
+        {
+            var v1 = p1Vertices[i];
+            var v2 = p1Vertices[(i + 1) % p1Vertices.Count];
+            var diff = v2 - v1;
+            var devideingVal = -(p2Plane[0] * diff[0] + p2Plane[1] * diff[1] + p2Plane[2] * diff[2]);
+            Debug.Log(devideingVal);
+
+
+
+            var u = (p2Plane[0] * v1[0] + p2Plane[1] * v1[1] + p2Plane[2] * v1[2] + p2Plane[3]) / devideingVal; // Plane var res of v1
+            var crossPos = v1 + u * diff;
+            if (Paper.InPaper(p2, crossPos) != new Vector3(-100, -100, -100))
+            {
+                var v1Local = p1.vertices[i];
+                var v2Local = p1.vertices[(i + 1) % p1Vertices.Count];
+                if (p2.vertices.Contains(v1Local) || p2.vertices.Contains(v2Local))
+                {
+                    continue;
+                }
+                return true;
+            }
+
+        }
+
+        for (int i = 0; i < p2Vertices.Count - 1; i++)  // Check p1 edge is crossed to p2 plane
+        {
+            var v1 = p2Vertices[i];
+            var v2 = p2Vertices[(i + 1) % p2Vertices.Count];
+            var diff = v2 - v1;
+            var devideingVal = -(p1Plane[0] * diff[0] + p1Plane[1] * diff[1] + p1Plane[2] * diff[2]);
+            Debug.Log(devideingVal);
+            var u = (p1Plane[0] * v1[0] + p1Plane[1] * v1[1] + p1Plane[2] * v1[2] + p1Plane[3]) / devideingVal; // Plane var res of v1
+            var crossPos = v1 + u * diff;
+
+            if (Paper.InPaper(p1, crossPos) != new Vector3(-100, -100, -100))
+            {
+                var v1Local = p2.vertices[i];
+                var v2Local = p2.vertices[(i + 1) % p2Vertices.Count];
+                if (p1.vertices.Contains(v1Local) || p1.vertices.Contains(v2Local))
+                {
+                    continue;
+                }
+                return true;
+            }
+        }
+        return false;
     }
     void Start()
     {
