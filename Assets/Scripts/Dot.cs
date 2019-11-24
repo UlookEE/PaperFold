@@ -33,7 +33,7 @@ public class Dot : MonoBehaviour
         GameObject obj = new GameObject();
         //  obj.transform.SetParent(rotPaper.transform);
         obj.transform.position = pos;
-        obj.transform.RotateAround(FoldPaper.rotPos2, FoldPaper.rotPos2 - FoldPaper.rotPos1, value < 4 ? 5 : value * 2);
+        obj.transform.RotateAround(FoldPaper.rotPos2, FoldPaper.rotPos2 - FoldPaper.rotPos1, value < 5 ? 7.5f : value * 1.5f);
 
         //Calculates next value of the plane equation.
         distance = makeEquation.DotToPlaneDistance(equation, obj.transform.position);
@@ -58,15 +58,15 @@ public class Dot : MonoBehaviour
 
         //Debug.Log("CROSSED! BEFORE: " + Mathf.Asin(beforeFloatRAW) * 180 / Mathf.PI + " AFTER: " + Mathf.Asin(afterFloatRAW) * 180 / Mathf.PI);
 
-        //This is for debug.
-        //Draws before-after line.
+        ////This is for debug.
+        ////Draws before-after line.
         //if (before * after == -1)
         //{
         //    //Debug.Log("CROSSED! BEFORE: " + Mathf.Asin(beforeFloatRAW) * 180 / Mathf.PI + " AFTER: " + Mathf.Asin(afterFloatRAW) * 180 / Mathf.PI);
 
-        ////    GameObject tempbef = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        ////    tempbef.transform.position = pos;
-        ////    tempbef.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+        //    GameObject tempbef = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        //    tempbef.transform.position = pos;
+        //    tempbef.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
 
         //    GameObject line = new GameObject();
         //    LineRenderer ren = line.AddComponent<LineRenderer>();
