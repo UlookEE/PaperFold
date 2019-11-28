@@ -504,7 +504,7 @@ public class FoldPaper : MonoBehaviour
                 if (planePos != new Vector3(-100, -100, -100))
                 {
                     Paper.usingPaper = FindUsingPaper(p);
-                    if (Paper.paperList[Paper.paperList.Count - 1].name == p.gameObject.name)
+                    if (Paper.paperList[Paper.paperList.Count - 1].name == Paper.usingPaper.gameObject.name)
                     {
                         Paper.fixedPaper = Paper.paperList[Paper.paperList.Count - 2].GetComponent<Paper>();
                     }
