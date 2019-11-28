@@ -240,6 +240,23 @@ public class makeEquation : MonoBehaviour
         return equation;
     }
 
+    public static List<Vector3> IntersectWithTwoPlane(List<float> p1, List<float> p2)   // Shared line with two plane eqation
+    {
+        var p1Normal = new Vector3(p1[0], p1[1], p1[2]);
+        var p2Normal = new Vector3(p2[0], p2[1], p2[2]);
+        var direct = Vector3.Cross(p1Normal, p2Normal);
+        Matrix4x4 sysEquation = Matrix4x4.zero;
+        sysEquation[0, 0] = p1[0]; sysEquation[0, 1] = p1[1];
+        sysEquation[1, 0] = p2[0]; sysEquation[1, 1] = p2[1];
+
+        Vector4 sol = sysEquation.inverse * new Vector4(p1[3], p2[3], 0, 0);
+
+        var lineEquation = new List<Vector3>();
+        lineEquation.Add(new Vector3(sol[0], sol[1], sol[2]));
+        lineEquation.Add(direct);
+        Debug.Log(lineEquation[0].normalized.ToString() + lineEquation[1].ToString());
+        return lineEquation;
+    }
 
     void Start()
     {
