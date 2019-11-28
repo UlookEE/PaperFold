@@ -55,7 +55,7 @@ public class makeEquation : MonoBehaviour
         return A * vertex.x + B * vertex.y + C;
     }
 
-    public static bool in_triangle2(List<float> equation, Vector3 dot, List<Vector3> vertices)
+    public static bool in_triangle2(Vector3 dot, List<Vector3> vertices)
     {
         var vertices2D = new Vector2[3];
         var allEqual = new bool[] { true, true, true };
@@ -192,11 +192,16 @@ public class makeEquation : MonoBehaviour
         // ax + by + cz + d = 0
     }
 
-    public static bool in_triangle(Vector3 dot, List<Vector3> vertex)
+    public static bool in_triangle(Vector3 dot, List<Vector3> vertex, bool isRaycast = true)
     {
         Vector3 d1 = vertex[1] - vertex[0];
         Vector3 d2 = vertex[2] - vertex[1];
         Vector3 d3 = vertex[0] - vertex[2];
+
+        List<float> p = make_plane_equation(vertex);
+
+        float distance = Mathf.Abs(p[0] * dot.x + p[1] * dot.y + p[2] * dot.z + p[3]) /
+            Mathf.Sqrt(Mathf.Pow(p[0], 2) + Mathf.Pow(p[1], 2) + Mathf.Pow(p[2], 2));
 
         Vector3 p1 = dot - vertex[0];
         Vector3 p2 = dot - vertex[1];
@@ -208,6 +213,12 @@ public class makeEquation : MonoBehaviour
             Vector3.Dot(Vector3.Cross(d3, p3), Vector3.Cross(p3, -d2)) >= 0
             )
         {
+            if (!isRaycast)
+            {
+                //Debug.Log("DIST : " + distance);
+                return distance < 0.002f;
+            }
+
             return true;
         }
         else return false;
@@ -229,7 +240,7 @@ public class makeEquation : MonoBehaviour
         return equation;
     }
 
-   
+
     void Start()
     {
 

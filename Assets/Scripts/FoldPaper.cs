@@ -4,16 +4,28 @@ using UnityEngine;
 
 public class Paper : MonoBehaviour
 {
-    static int paperCount = 0;                                          // for gameobject name
+    public static int paperCount = 0;                                   // for gameobject name
     public List<Vector3> vertices;                                      // last vertice is CoG
     public static int sphereCount = 0;                                  // if vertex of foldline selected, spherecout++
     public static Paper usingPaper;                                     // one paper set of rotating papers
     public static Paper fixedPaper;                                     // one paper set of not rotating papers
     public static List<GameObject> paperList = new List<GameObject>();  // entire paper list
+    public static Transform parent;                                     // MinSeok: parent of papers.
+
+    public Paper isSamePlaneEquation = null;                            //is this plane has same equation?
+
+    // Collision detection
+    private void OnCollisionStay(Collision collision)
+    {
+        isSamePlaneEquation = collision.collider.GetComponent<Paper>();
+        Debug.Log(isSamePlaneEquation.name);
+    }
 
     /* Make One Paper */
     public void InitPaper(List<Vector3> vertices, List<string> foldstring = null)
     {
+        parent = GameObject.Find("Parent").transform;
+
         gameObject.layer = LayerMask.NameToLayer("PAPER");
         gameObject.name = "Paper Split " + paperCount++;
 
@@ -65,12 +77,21 @@ public class Paper : MonoBehaviour
         mc.isTrigger = true;
     }
     /* make paper with gameobject */
-    public static void MakePaper(List<Vector3> vertices)
+    public static void MakePaper(List<Vector3> vertices, Transform parent = null)
     {
         GameObject tmp = new GameObject();
+
+        if (parent)
+        {
+            tmp.transform.parent = parent;
+            tmp.transform.localPosition = Vector3.zero;
+            tmp.transform.localScale = Vector3.one;
+        }
+
         tmp.AddComponent<Paper>();
         tmp.GetComponent<Paper>().InitPaper(vertices);
         paperList.Add(tmp);
+
     }
 
 
@@ -165,7 +186,7 @@ public class Paper : MonoBehaviour
         }
         newvertices.Add(endpoint);
 
-        MakePaper(newvertices);
+        MakePaper(newvertices, parent);
         //왼쪽 페이퍼 만들기 시작
         List<Vector3> new2vertices = new List<Vector3>();
         new2vertices.Add(endpoint);
@@ -177,7 +198,7 @@ public class Paper : MonoBehaviour
         }
         new2vertices.Add(startpoint);
 
-        MakePaper(new2vertices);
+        MakePaper(new2vertices, parent);
 
         //서로 연결
         var tmpPos = gameObject.transform.position;
@@ -221,16 +242,18 @@ public class Paper : MonoBehaviour
 
 
     /* if pos in paper, return pos */
-    public static Vector3 InPaper(Paper P, Vector3 pos)
+    public static Vector3 InPaper(Paper P, Vector3 pos, bool isRaycast = true)
     {
         var globalVertices = P.GetGlobalVertices();
         var equation = makeEquation.make_plane_equation(new List<Vector3>() { globalVertices[0], globalVertices[1], globalVertices[2] });
-        pos = new Vector3(pos.x, pos.y, -(equation[0] * pos.x + equation[1] * pos.y + equation[3]) / equation[2]);
+        //pos = new Vector3(pos.x, pos.y, -(equation[0] * pos.x + equation[1] * pos.y + equation[3]) / equation[2]);
         var triangles = P.GetComponent<MeshFilter>().mesh.triangles;
         RaycastHit hit = new RaycastHit(); hit.point = pos;
         for (int i = 0; i < triangles.Length; i += 3)
         {
-            if (makeEquation.in_triangle(pos, new List<Vector3>() { globalVertices[triangles[i]], globalVertices[triangles[i + 1]], globalVertices[triangles[i + 2]] }))
+            if (makeEquation.in_triangle(pos,
+                new List<Vector3>() { globalVertices[triangles[i]], globalVertices[triangles[i + 1]], globalVertices[triangles[i + 2]] },
+                isRaycast))
             {
                 return pos;
             }
@@ -430,12 +453,25 @@ public class FoldPaper : MonoBehaviour
         {
             if (hit.collider.name.Contains("Paper"))
             {
+                //Vector3 start = GetComponent<Camera>().ScreenToWorldPoint(Input.mousePosition);
+                //GameObject myLine = new GameObject();
+                //myLine.transform.position = start;
+                //myLine.AddComponent<LineRenderer>();
+                //LineRenderer line = myLine.GetComponent<LineRenderer>();
+                //line.startColor = Color.white;
+                //line.endColor = Color.white;
+                //line.startWidth = 0.01f;
+                //line.endWidth = 0.01f;
+                //line.SetPositions(new Vector3[] { start, hit.point });
+                //line.enabled = true;
+                //Destroy(myLine, 10);
                 GameObject hitGO = hit.collider.gameObject;
                 Paper p = hit.collider.gameObject.GetComponent<Paper>();
                 Vector3 planePos = Paper.InPaper(p, hit.point);
                 if (planePos != new Vector3(-100, -100, -100))
                 {
                     Vector3 edgePos = Paper.AttatchToEdge(p, planePos);
+                    Debug.Log(edgePos);
                     if (edgePos != new Vector3(-100, -100, -100) && (Paper.usingPaper == p || Paper.sphereCount == 0))
                     {
                         if (!CheckSphereOnSharedEdge(edgePos))  // Check edgePos and sphere 0's pos is in same edge
@@ -542,6 +578,10 @@ public class FoldPaper : MonoBehaviour
             Paper.usingPaper.Folding(pos1, pos2);
 
             isCut = true;
+
+            count++;
+            //manager.StepText.text = count.ToString();
+            //manager.StepTextBackground.text = count.ToString();
         }
         //If cutting enabled, find paper and start dragging it.
         else
@@ -567,7 +607,8 @@ public class FoldPaper : MonoBehaviour
         float angle = Mathf.Acos(Vector2.Dot(Paper.cursorDeltaPosition, campos2 - campos1) / (((Vector2)Paper.cursorDeltaPosition).magnitude * (campos2 - campos1).magnitude));
         float direction = Mathf.Sign(Vector3.Cross(Paper.cursorDeltaPosition, campos2 - campos1).z);
         float cosine = direction * Mathf.Abs(Mathf.Sin(angle));
-        float value = 1 * direction;
+        float value = Mathf.Sqrt(Paper.cursorDeltaPosition.magnitude) * cosine / 40;
+        //Debug.Log("VALUE: " + value);
         if (double.IsNaN(value))
             value = 0;
 
@@ -576,73 +617,80 @@ public class FoldPaper : MonoBehaviour
             p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, value);
         }
 
-        bool rollBackFlag = true;
-        while (rollBackFlag)
+        //bool rollBackFlag = true;
+        //while (rollBackFlag)
+        //{
+        //    Debug.Log("rogue");
+        //    rollBackFlag = false;
+        for (int i = 0; i < Paper.paperList.Count /*&& !rollBackFlag*/; i++)
         {
-            rollBackFlag = false;
-            for (int i = 0; i < Paper.paperList.Count && !rollBackFlag; i++)
+            for (int j = i + 1; j < Paper.paperList.Count /*&& !rollBackFlag*/; j++)
             {
-                for (int j = i + 1; j < Paper.paperList.Count && !rollBackFlag; j++)
+                if (PaperCrossed(Paper.paperList[i].GetComponent<Paper>(), Paper.paperList[j].GetComponent<Paper>()))
                 {
-                    if (PaperCrossed(Paper.paperList[i].GetComponent<Paper>(), Paper.paperList[j].GetComponent<Paper>()))
+                    //rollBackFlag = true;
+                    Debug.Log("PaperCrossed : True");
+                    foreach (var p in rotPapers)
                     {
-                        rollBackFlag = true;
-                        Debug.Log("PaperCrossed : True");
-                        foreach (var p in rotPapers)
-                        {
-                            p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, -value * 1.5f);
-                        }
+                        p.transform.RotateAround(rotPos2, rotPos2 - rotPos1, -value * 2f);
                     }
                 }
             }
         }
+        //}
     }
 
     // Return p1, p2 is Crossed
     public static bool PaperCrossed(Paper p1, Paper p2)
     {
+        if (rotPapers.Contains(p1) == rotPapers.Contains(p2))
+        {
+            return false;
+        }
+
         var p1Vertices = p1.GetGlobalVertices();
         p1Vertices.RemoveAt(p1Vertices.Count - 1); // Remove CoG
         var p2Vertices = p2.GetGlobalVertices();
         p2Vertices.RemoveAt(p2Vertices.Count - 1);
 
-        var p1Plane = makeEquation.make_plane_equation(p1Vertices);
-        var p2Plane = makeEquation.make_plane_equation(p2Vertices);
-
-        // Check whether p1 and p2 has same plane equation.
-
-        Vector3 p1v = new Vector3(p1Plane[0], p1Plane[1], p1Plane[2]);
-        Vector3 p2v = new Vector3(p2Plane[0], p2Plane[1], p2Plane[2]);
-
-        float theta = Mathf.Acos(Vector3.Dot(p1v, p2v) / (p1v.magnitude * p2v.magnitude));  // Angle between p1 and p2 normal vector (by radian).
-
-        Debug.Log(theta + " " + Mathf.Abs(p1Plane[3] - p2v.x / p1v.x * p2Plane[3]));
-
-        if (Mathf.PI * (1 - 0.005f) < theta && Mathf.Abs(p1Plane[3] - p2v.x / p1v.x * p2Plane[3]) < 0.5f)
-        {
-            Debug.Log("P1 and P2 has same plane equation.");
-
-            return true;
-        }
-
-        for (int i = 0; i < p1Vertices.Count - 1; i++)  // Check p1 edge is crossed to p2 plane
+        for (int i = 0; i < p1Vertices.Count; i++)  // Check p1 edge is crossed to p2 plane
         {
             var v1 = p1Vertices[i];
             var v2 = p1Vertices[(i + 1) % p1Vertices.Count];
-            var diff = v2 - v1;
-            var devideingVal = -(p2Plane[0] * diff[0] + p2Plane[1] * diff[1] + p2Plane[2] * diff[2]);
 
-            var u = (p2Plane[0] * v1[0] + p2Plane[1] * v1[1] + p2Plane[2] * v1[2] + p2Plane[3]) / devideingVal; // Plane var res of v1
-            var crossPos = v1 + u * diff;
-            if (Paper.InPaper(p2, crossPos) != new Vector3(-100, -100, -100) && Paper.InPaper(p1, crossPos) != new Vector3(-100, -100, -100))
+            if (p2.vertices.Contains(p1.vertices[i]) && p2.vertices.Contains(p1.vertices[(i + 1) % p1Vertices.Count]))
             {
-                var v1Local = p1.vertices[i];
-                var v2Local = p1.vertices[(i + 1) % p1Vertices.Count];
-                if (p2.vertices.Contains(v1Local) || p2.vertices.Contains(v2Local))
+                continue;
+            }
+
+            if (Paper.InPaper(p2, v1, false) != new Vector3(-100, -100, -100))
+            {
+                if (p2.vertices.Contains(p1.vertices[i]))
                 {
                     continue;
                 }
+                //GameObject test = MakeSphere(v1, new Color(0, 0, 1, 0.2f), p1.gameObject);
+                //test.transform.localScale = Vector3.one * 0.08f;
                 return true;
+            }
+
+            for (int j = 1; j < 10; ++j)
+            {
+                Vector3 dot = Vector3.Lerp(v1, v2, j / 10f);
+                //GameObject test = MakeSphere(dot, new Color(0, 0, 1, 0.2f), p1.gameObject);
+                //test.transform.localScale = Vector3.one * 0.02f;
+                if (Paper.InPaper(p2, dot, false) != new Vector3(-100, -100, -100))
+                {
+                    //GameObject o = MakeSphere(Paper.InPaper(p2, dot, false), new Color(1, 0, 0, 0.2f), p1.gameObject);
+                    //o.transform.localScale = Vector3.one * 0.08f;
+                    //Destroy(o, 10);
+                    ////Debug.Log(Paper.InPaper(p2, dot, false));
+                    //test.GetComponent<MeshRenderer>().material.color = new Color(1, 1, 0, 0.2f);
+                    //test.transform.localScale = Vector3.one * 0.05f;
+                    //Destroy(test, 10);
+                    return true;
+                }
+                //Destroy(test, 5);
             }
         }
 
@@ -650,26 +698,62 @@ public class FoldPaper : MonoBehaviour
         {
             var v1 = p2Vertices[i];
             var v2 = p2Vertices[(i + 1) % p2Vertices.Count];
-            var diff = v2 - v1;
-            var devideingVal = -(p1Plane[0] * diff[0] + p1Plane[1] * diff[1] + p1Plane[2] * diff[2]);
-            var u = (p1Plane[0] * v1[0] + p1Plane[1] * v1[1] + p1Plane[2] * v1[2] + p1Plane[3]) / devideingVal; // Plane var res of v1
-            var crossPos = v1 + u * diff;
 
-            if (Paper.InPaper(p2, crossPos) != new Vector3(-100, -100, -100) && Paper.InPaper(p1, crossPos) != new Vector3(-100, -100, -100))
+            if (p1.vertices.Contains(p2.vertices[i]) && p1.vertices.Contains(p2.vertices[(i + 1) % p2Vertices.Count]))
             {
-                var v1Local = p2.vertices[i];
-                var v2Local = p2.vertices[(i + 1) % p2Vertices.Count];
-                if (p1.vertices.Contains(v1Local) || p1.vertices.Contains(v2Local))
+                continue;
+            }
+
+            if (Paper.InPaper(p1, v1, false) != new Vector3(-100, -100, -100))
+            {
+                if (p1.vertices.Contains(p2.vertices[i]))
                 {
                     continue;
                 }
+                //GameObject test = MakeSphere(v1, new Color(0, 0, 1, 0.2f), p1.gameObject);
+                //test.transform.localScale = Vector3.one * 0.08f;
                 return true;
             }
+
+            for (int j = 1; j < 10; ++j)
+            {
+                Vector3 dot = Vector3.Lerp(v1, v2, j / 10f);
+                //GameObject test = MakeSphere(dot, new Color(0, 1, 0, 0.2f), p1.gameObject);
+                //test.transform.localScale = Vector3.one * 0.02f;
+                if (Paper.InPaper(p1, dot, false) != new Vector3(-100, -100, -100))
+                {
+                    //GameObject o = MakeSphere(Paper.InPaper(p1, dot, false), new Color(0, 1, 1, 0.2f), p1.gameObject);
+                    //o.transform.localScale = Vector3.one * 0.08f;
+                    //Destroy(o, 10);
+                    //test.GetComponent<MeshRenderer>().material.color = new Color(1, 0, 1, 0.2f);
+                    //test.transform.localScale = Vector3.one * 0.05f;
+                    //Destroy(test, 10);
+                    return true;
+                }
+                //Destroy(test, 5);
+            }
         }
+
         return false;
     }
+
     void Start()
     {
+        Debug.Log("AT_START");
+        Paper.paperList = new List<GameObject>();
+        Paper.usingPaper = null;
+        Paper.fixedPaper = null;
+        Paper.sphereCount = 0;
+        Paper.paperCount = 0;                                          // for gameobject name
+
+        isCut = false;
+        count = 0;
+
+        // UI update
+
+        //manager.StepText.text = count.ToString();
+        //manager.StepTextBackground.text = count.ToString();
+
         int width = 1, height = 1;
 
         List<Vector3> vertices = new List<Vector3>
@@ -680,10 +764,13 @@ public class FoldPaper : MonoBehaviour
             new Vector3(0,height,0),
         };
 
-        Paper.MakePaper(vertices);
+        Paper.MakePaper(vertices, parent);
 
 
     }
+
+    public Transform parent;                                           // MinSeok: parent of paper.
+    //public InGameFreeObjectManager manager;                             //manager for UI update.
 
     public static bool isCut = false;
     public static Vector3 pos1;             //local positions
@@ -691,6 +778,8 @@ public class FoldPaper : MonoBehaviour
     public static Vector3 rotPos1;          //real positions
     public static Vector3 rotPos2;
     public static HashSet<Paper> rotPapers; //rotating papers
+    public static int count = 0;            //step count
+
     void Update()
     {
         //민석
