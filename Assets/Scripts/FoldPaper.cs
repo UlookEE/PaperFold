@@ -176,7 +176,7 @@ public class Paper : MonoBehaviour
             return false; // 직선 상에서 분명 좌표를 안잡았음..
         }
 
-        //오른쪽 페이퍼 만들기 시작
+        // Make right paper
         List<Vector3> newvertices = new List<Vector3>();
         newvertices.Add(startpoint);
         for (int t = startindex + 1; t - 1 != endindex; t++)
@@ -187,7 +187,7 @@ public class Paper : MonoBehaviour
         newvertices.Add(endpoint);
 
         MakePaper(newvertices, parent);
-        //왼쪽 페이퍼 만들기 시작
+        // Make left paper
         List<Vector3> new2vertices = new List<Vector3>();
         new2vertices.Add(endpoint);
 
