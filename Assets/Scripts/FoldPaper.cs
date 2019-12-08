@@ -200,7 +200,7 @@ public class Paper : MonoBehaviour
 
         MakePaper(new2vertices, parent);
 
-        //서로 연결
+        // Link both
         var tmpPos = gameObject.transform.position;
         var tmpRot = gameObject.transform.rotation;
         paperList[paperList.Count - 2].transform.position = tmpPos;
@@ -381,6 +381,7 @@ public class Paper : MonoBehaviour
             cursorDeltaPosition = cursorInitialPosition - Input.mousePosition;
         }
     }
+
 }
 
 public class FoldPaper : MonoBehaviour
